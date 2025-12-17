@@ -1,5 +1,9 @@
 # Inkdrop
 
+![all-app](https://files.catbox.moe/lkta5o.png)
+![settings](https://files.catbox.moe/i55yf1.png)
+
+
 A beautiful, feature-rich Markdown note-taking desktop application built with Electron, React, and Tailwind CSS 4.1.
 
 ![Inkdrop](https://img.shields.io/badge/version-1.0.0-blue)
