@@ -4,7 +4,7 @@
 ![settings](https://files.catbox.moe/d30z6j.png)
 
 ## Math support for your class!
-![math]([https://files.catbox.moe/ae7kg0.png](https://files.catbox.moe/h4lm0o.png))
+![math](https://files.catbox.moe/h4lm0o.png)
 
 A beautiful, feature-rich Markdown note-taking desktop application built with Electron, React, and Tailwind CSS 4.1.
 
