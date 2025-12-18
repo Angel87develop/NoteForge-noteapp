@@ -17,6 +17,10 @@ export const lightTheme = {
   '--border-subtle': '#e5e5e5',
   '--border-default': '#d4d4d4',
   '--border-accent': '#3b82f6',
+  '--accent-primary': '#3b82f6', // Azul para acentos principales
+  '--accent-secondary': '#60a5fa', // Azul más claro
+  '--accent-muted': '#1e40af', // Azul más oscuro
+  '--accent-glow': 'rgba(59, 130, 246, 0.15)', // Glow azul
   '--shadow-sm': '0 1px 2px rgba(0, 0, 0, 0.1)',
   '--shadow-md': '0 4px 6px rgba(0, 0, 0, 0.1)',
   '--shadow-lg': '0 10px 15px rgba(0, 0, 0, 0.1)',
@@ -39,6 +43,10 @@ export const sidebarDarkTheme = {
   '--text-title': '#f59e0b',
   '--border-subtle': '#262626',
   '--border-default': '#333333',
-  '--border-accent': '#f59e0b'
+  '--border-accent': '#f59e0b',
+  '--accent-primary': '#f59e0b',
+  '--accent-secondary': '#fbbf24',
+  '--accent-muted': '#92400e',
+  '--accent-glow': 'rgba(245, 158, 11, 0.15)'
 }
 

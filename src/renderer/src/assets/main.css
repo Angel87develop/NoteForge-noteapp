@@ -71,7 +71,7 @@ body {
   height: 100vh;
   display: flex;
   overflow: hidden;
-  background: linear-gradient(135deg, var(--bg-primary) 0%, #0a0a0a 100%);
+  background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -381,6 +381,45 @@ body {
 /* Sidebar styles */
 .sidebar {
   background: linear-gradient(180deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
+  color: var(--text-primary) !important;
+}
+
+/* Forzar colores de texto en el sidebar para que siempre sean visibles */
+.sidebar,
+.sidebar * {
+  color: inherit;
+}
+
+.sidebar .text-text-primary,
+.sidebar [class*="text-text-primary"] {
+  color: var(--text-primary) !important;
+}
+
+.sidebar .text-text-secondary,
+.sidebar [class*="text-text-secondary"] {
+  color: var(--text-secondary) !important;
+}
+
+.sidebar .text-text-muted,
+.sidebar [class*="text-text-muted"] {
+  color: var(--text-muted) !important;
+}
+
+/* Settings - Asegurar que los bordes y fondos usen variables CSS */
+.border-ink-700 {
+  border-color: var(--border-default) !important;
+}
+
+.border-ink-600 {
+  border-color: var(--border-subtle) !important;
+}
+
+.bg-ink-800 {
+  background-color: var(--bg-tertiary) !important;
+}
+
+.bg-ink-700 {
+  background-color: var(--bg-hover) !important;
 }
 
 .sidebar-item {

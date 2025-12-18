@@ -5,33 +5,33 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Base colors - Deep charcoal with warm undertones
+        // Base colors - Using CSS variables for theme support
         ink: {
-          950: '#0a0a0a',
-          900: '#0f0f0f',
-          850: '#161616',
-          800: '#1c1c1c',
-          700: '#242424',
-          600: '#2a2a2a',
-          500: '#333333',
-          400: '#404040',
-          300: '#525252',
+          950: 'var(--bg-primary)',
+          900: 'var(--bg-primary)',
+          850: 'var(--bg-secondary)',
+          800: 'var(--bg-tertiary)',
+          700: 'var(--bg-elevated)',
+          600: 'var(--bg-hover)',
+          500: 'var(--border-default)',
+          400: 'var(--border-default)',
+          300: 'var(--text-muted)',
         },
-        // Accent colors - Warm amber/gold
+        // Accent colors - Using CSS variables
         amber: {
-          DEFAULT: '#f59e0b',
-          light: '#fbbf24',
-          dark: '#92400e',
-          muted: 'rgba(245, 158, 11, 0.15)',
+          DEFAULT: 'var(--accent-primary)',
+          light: 'var(--accent-secondary)',
+          dark: 'var(--accent-muted)',
+          muted: 'var(--accent-glow)',
         },
-        // Text colors
+        // Text colors - Using CSS variables
         text: {
-          primary: '#fafafa',
-          secondary: '#a3a3a3',
-          muted: '#737373',
-          accent: '#fcd34d',
+          primary: 'var(--text-primary)',
+          secondary: 'var(--text-secondary)',
+          muted: 'var(--text-muted)',
+          accent: 'var(--text-accent)',
         },
-        // Status colors
+        // Status colors - These can stay static as they're semantic
         status: {
           active: '#22c55e',
           'on-hold': '#f59e0b',

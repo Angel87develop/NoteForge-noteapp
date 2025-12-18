@@ -28,17 +28,20 @@ export default function Select({ label, description, value, options, onChange, d
         value={value}
         onChange={(e) => onChange(e.target.value)}
         disabled={disabled}
-        className={`w-full px-4 py-2.5 bg-ink-800 border border-ink-600 rounded-lg text-sm text-text-primary focus:outline-none focus:border-amber focus:ring-2 focus:ring-amber/20 transition-all ${
+        className={`w-full px-4 py-2.5 border rounded-lg text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-amber/20 transition-all ${
           disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
         }`}
+        style={{ backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border-subtle)', color: 'var(--text-primary)' }}
+        onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--accent-primary)' }}
+        onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border-subtle)' }}
       >
         {options.map((option) => (
           <option 
             key={option.value} 
             value={option.value}
             style={{ 
-              backgroundColor: '#1f2937',
-              color: '#e5e7eb'
+              backgroundColor: 'var(--bg-elevated)',
+              color: 'var(--text-primary)'
             }}
           >
             {option.label}

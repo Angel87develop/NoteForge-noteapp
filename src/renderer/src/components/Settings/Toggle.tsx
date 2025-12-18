@@ -35,9 +35,13 @@ export default function Toggle({ label, description, checked, onChange, disabled
         <span
           className={`pointer-events-none inline-block h-5 w-5 transform rounded-full shadow-lg ring-0 transition duration-200 ease-in-out ${
             checked 
-              ? 'translate-x-5 bg-white' 
-              : 'translate-x-0 bg-ink-300 border border-ink-400'
+              ? 'translate-x-5' 
+              : 'translate-x-0 border'
           }`}
+          style={checked 
+            ? { backgroundColor: 'var(--text-primary)' }
+            : { backgroundColor: 'var(--text-primary)', borderColor: 'var(--border-default)', opacity: 0.5 }
+          }
         />
       </button>
     </div>

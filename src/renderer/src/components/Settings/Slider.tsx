@@ -31,7 +31,7 @@ export default function Slider({
             <p className="text-xs text-text-muted mt-1">{description}</p>
           )}
         </div>
-        <span className="text-sm font-mono text-amber bg-ink-800 px-2 py-1 rounded">
+        <span className="text-sm font-mono text-amber px-2 py-1 rounded" style={{ backgroundColor: 'var(--bg-tertiary)' }}>
           {value}{unit}
         </span>
       </div>
@@ -43,11 +43,11 @@ export default function Slider({
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
         disabled={disabled}
-        className={`w-full h-2 bg-ink-700 rounded-lg appearance-none cursor-pointer accent-amber ${
+        className={`w-full h-2 rounded-lg appearance-none cursor-pointer accent-amber ${
           disabled ? 'opacity-50 cursor-not-allowed' : ''
         }`}
         style={{
-          background: `linear-gradient(to right, #f59e0b 0%, #f59e0b ${((value - min) / (max - min)) * 100}%, #1f2937 ${((value - min) / (max - min)) * 100}%, #1f2937 100%)`
+          background: `linear-gradient(to right, var(--accent-primary) 0%, var(--accent-primary) ${((value - min) / (max - min)) * 100}%, var(--bg-tertiary) ${((value - min) / (max - min)) * 100}%, var(--bg-tertiary) 100%)`
         }}
       />
     </div>

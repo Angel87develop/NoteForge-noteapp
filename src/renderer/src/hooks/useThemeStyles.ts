@@ -28,14 +28,6 @@ export function useThemeStyles(): void {
       root.classList.remove('theme-light')
     }
 
-    // Aplicar tema oscuro a la sidebar (siempre oscura)
-    const sidebar = document.querySelector('.sidebar')
-    if (sidebar) {
-      Object.entries(sidebarDarkTheme).forEach(([key, value]) => {
-        ;(sidebar as HTMLElement).style.setProperty(key, value)
-      })
-    }
-
     // Aplicar border radius
     const borderRadius = settings.ui.theme.borderRadius
     root.style.setProperty('--border-radius', `${borderRadius}px`)
@@ -73,10 +65,34 @@ export function useThemeStyles(): void {
     root.classList.remove('density-compact', 'density-normal', 'density-comfortable')
     root.classList.add(`density-${density}`)
 
-    return () => {
-      // Cleanup si es necesario
+    // Aplicar tema oscuro a la sidebar (siempre oscura)
+    const applySidebarTheme = (): void => {
+      const sidebar = document.querySelector('.sidebar')
+      if (sidebar) {
+        Object.entries(sidebarDarkTheme).forEach(([key, value]) => {
+          ;(sidebar as HTMLElement).style.setProperty(key, value)
+        })
+      }
     }
-  }, [settings.ui.theme, settings.ui.visibility.iconSet])
+    
+    // Aplicar inmediatamente
+    applySidebarTheme()
+    
+    // También aplicar después de un pequeño delay para asegurar que el DOM esté listo
+    const timeoutId = setTimeout(applySidebarTheme, 100)
+    
+    // Observar cambios en el DOM para aplicar el tema cuando se agregue el sidebar
+    const observer = new MutationObserver(() => {
+      applySidebarTheme()
+    })
+    
+    observer.observe(document.body, { childList: true, subtree: true })
+
+    return () => {
+      clearTimeout(timeoutId)
+      observer.disconnect()
+    }
+  }, [settings.ui.theme.theme, settings.ui.theme.borderRadius, settings.ui.theme.density, settings.ui.theme.animations, settings.ui.theme.animationSpeed, settings.ui.visibility.iconSet])
 
   // Escuchar cambios en el sistema para theme 'system'
   useEffect(() => {

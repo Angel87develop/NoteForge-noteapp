@@ -78,16 +78,19 @@ export default function Settings({ onClose }: SettingsProps): React.ReactElement
 
   return (
     <div className="fixed inset-0 z-50 flex bg-black/60 backdrop-blur-sm animate-fade-in">
-      <div className="w-full h-full flex bg-ink-900">
+      <div className="w-full h-full flex" style={{ backgroundColor: 'var(--bg-elevated)' }}>
         {/* Categories Sidebar */}
-        <div className="w-64 bg-ink-850 border-r border-ink-700 flex flex-col">
+        <div className="w-64 border-r flex flex-col" style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-default)' }}>
           {/* Header */}
-          <div className="p-5 border-b border-ink-700">
+          <div className="p-5 border-b" style={{ borderColor: 'var(--border-default)' }}>
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-serif font-semibold text-text-primary">Settings</h2>
               <button
                 onClick={onClose}
-                className="p-1.5 text-text-muted hover:text-text-primary hover:bg-ink-700 rounded transition-all"
+                className="p-1.5 text-text-muted hover:text-text-primary rounded transition-all"
+                style={{ '--hover-bg': 'var(--bg-hover)' } as React.CSSProperties}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--bg-hover)' }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent' }}
               >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
@@ -97,7 +100,7 @@ export default function Settings({ onClose }: SettingsProps): React.ReactElement
           </div>
 
           {/* Search */}
-          <div className="p-4 border-b border-ink-700">
+          <div className="p-4 border-b" style={{ borderColor: 'var(--border-default)' }}>
             <div className="relative">
               <svg
                 width="16"
@@ -114,7 +117,10 @@ export default function Settings({ onClose }: SettingsProps): React.ReactElement
                 placeholder="Search settings..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 bg-ink-800 border border-ink-600 rounded-lg text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-amber focus:ring-2 focus:ring-amber/20"
+                className="w-full pl-9 pr-4 py-2 border rounded-lg text-sm text-text-primary placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-amber/20"
+                style={{ backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border-subtle)' }}
+                onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--accent-primary)' }}
+                onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border-subtle)' }}
               />
             </div>
           </div>
@@ -127,9 +133,23 @@ export default function Settings({ onClose }: SettingsProps): React.ReactElement
                 onClick={() => setActiveSection(section.id)}
                 className={`w-full flex items-center gap-3 px-4 py-3 mx-2 rounded-lg transition-all ${
                   activeSection === section.id
-                    ? 'bg-amber-muted border-l-2 border-amber text-text-primary'
-                    : 'text-text-primary hover:bg-ink-700'
+                    ? 'border-l-2 text-text-primary'
+                    : 'text-text-primary'
                 }`}
+                style={activeSection === section.id 
+                  ? { backgroundColor: 'var(--accent-glow)', borderLeftColor: 'var(--accent-primary)' }
+                  : {}
+                }
+                onMouseEnter={(e) => {
+                  if (activeSection !== section.id) {
+                    (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--bg-hover)'
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (activeSection !== section.id) {
+                    (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'
+                  }
+                }}
               >
                 <span className={activeSection === section.id ? 'text-amber' : 'text-text-primary'}>
                   {section.icon}
@@ -143,7 +163,7 @@ export default function Settings({ onClose }: SettingsProps): React.ReactElement
         {/* Main Panel */}
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Panel Header */}
-          <div className="p-6 border-b border-ink-700">
+          <div className="p-6 border-b" style={{ borderColor: 'var(--border-default)' }}>
             <h3 className="text-2xl font-serif font-semibold text-text-primary">
               {sections.find((s) => s.id === activeSection)?.label}
             </h3>

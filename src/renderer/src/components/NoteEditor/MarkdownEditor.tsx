@@ -269,6 +269,9 @@ export default function MarkdownEditor({
     if (!editorRef.current) return
     isUpdatingRef.current = true
 
+    // Guardar la posición del cursor antes de extraer el contenido
+    const caretPos = saveCaretPosition()
+
     // Extraer el texto plano según el DOM actual (antes de re-renderizar)
     const newContent = extractTextFromHtml(editorRef.current)
     lastContentRef.current = newContent
@@ -282,31 +285,23 @@ export default function MarkdownEditor({
       // Actualizar el HTML estilizado
       editor.innerHTML = renderContentWithStyles(newContent)
 
-      // Colocar siempre el cursor al final del contenido para evitar inversiones extrañas
-      const selection = window.getSelection()
-      if (selection) {
-        const range = document.createRange()
-        let lastTextNode: Node | null = null
-
-        // Buscar el último nodo de texto dentro del editor
-        const walker = document.createTreeWalker(editor, NodeFilter.SHOW_TEXT, null)
-        let currentNode = walker.nextNode()
-        while (currentNode) {
-          lastTextNode = currentNode
-          currentNode = walker.nextNode()
-        }
-
-        if (lastTextNode && lastTextNode.textContent) {
-          range.setStart(lastTextNode, lastTextNode.textContent.length)
-          range.collapse(true)
-          selection.removeAllRanges()
-          selection.addRange(range)
+      // Restaurar la posición del cursor
+      // Si no se pudo guardar la posición, intentar calcularla basándose en el cambio de contenido
+      if (caretPos !== null) {
+        restoreCaretPosition(caretPos)
+      } else {
+        // Fallback: intentar mantener la posición relativa
+        // Calcular la nueva posición basándose en la longitud del contenido
+        const newLength = newContent.length
+        if (newLength > 0) {
+          // Intentar posicionar cerca del final, pero no exactamente al final
+          restoreCaretPosition(Math.min(newLength - 1, newLength))
         }
       }
 
       isUpdatingRef.current = false
     })
-  }, [onContentChange])
+  }, [onContentChange, saveCaretPosition, restoreCaretPosition])
 
   // Manejar teclas especiales
   const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
