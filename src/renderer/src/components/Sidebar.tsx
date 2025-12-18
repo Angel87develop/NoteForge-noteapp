@@ -277,7 +277,7 @@ export default function Sidebar({
   )
 
   return (
-    <div className="w-64 h-full bg-linear-to-b from-ink-850 to-ink-900 border-r border-ink-700 flex flex-col overflow-hidden">
+    <div className="sidebar w-64 h-full bg-linear-to-b from-ink-850 to-ink-900 border-r border-ink-700 flex flex-col overflow-hidden">
       {/* Logo/Brand */}
       <div className="p-5 border-b border-ink-700">
         <div className="flex items-center justify-between">

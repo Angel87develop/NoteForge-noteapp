@@ -7,6 +7,7 @@ import Settings from './components/Settings'
 import { SettingsProvider, useSettings } from './contexts/SettingsContext'
 import { Note, Notebook } from './types/note'
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
+import { useThemeStyles } from './hooks/useThemeStyles'
 
 // Sample data
 const initialNotes: Note[] = []
@@ -428,6 +429,9 @@ function AppContent({
 }): React.JSX.Element {
   const { settings, updateUIVisibility } = useSettings()
 
+  // Aplicar tema y estilos globales (claro/oscuro, transparencia, densidad, iconos, etc.)
+  useThemeStyles()
+
   // Aplicar fuente globalmente
   useEffect(() => {
     const fontFamily = settings.editor.appearance.fontFamily === 'custom'
@@ -494,15 +498,17 @@ function AppContent({
         />
       )}
 
-      {/* Section 2: Notes List */}
-      <NotesList
-        notes={activeNotes}
-        selectedNoteId={selectedNoteId}
-        onNoteSelect={onNoteSelect}
-        onNewNote={onNewNote}
-        onPinNote={onPinNote}
-        onDeleteNote={onDeleteNote}
-      />
+      {/* Section 2: Notes List (Notes Bar) */}
+      {settings.ui.visibility.showNotesBar && (
+        <NotesList
+          notes={activeNotes}
+          selectedNoteId={selectedNoteId}
+          onNoteSelect={onNoteSelect}
+          onNewNote={onNewNote}
+          onPinNote={onPinNote}
+          onDeleteNote={onDeleteNote}
+        />
+      )}
 
       {/* Section 3: Note Editor */}
       <NoteEditor

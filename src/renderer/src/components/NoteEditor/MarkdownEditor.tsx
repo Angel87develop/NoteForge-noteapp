@@ -268,20 +268,45 @@ export default function MarkdownEditor({
   const handleInput = useCallback(() => {
     if (!editorRef.current) return
     isUpdatingRef.current = true
+
+    // Extraer el texto plano según el DOM actual (antes de re-renderizar)
     const newContent = extractTextFromHtml(editorRef.current)
     lastContentRef.current = newContent
     onContentChange(newContent)
-    
+
     // Re-renderizar con estilos después de un pequeño delay
     requestAnimationFrame(() => {
-      if (editorRef.current) {
-        const caretPos = saveCaretPosition()
-        editorRef.current.innerHTML = renderContentWithStyles(newContent)
-        restoreCaretPosition(caretPos)
-        isUpdatingRef.current = false
+      const editor = editorRef.current
+      if (!editor) return
+
+      // Actualizar el HTML estilizado
+      editor.innerHTML = renderContentWithStyles(newContent)
+
+      // Colocar siempre el cursor al final del contenido para evitar inversiones extrañas
+      const selection = window.getSelection()
+      if (selection) {
+        const range = document.createRange()
+        let lastTextNode: Node | null = null
+
+        // Buscar el último nodo de texto dentro del editor
+        const walker = document.createTreeWalker(editor, NodeFilter.SHOW_TEXT, null)
+        let currentNode = walker.nextNode()
+        while (currentNode) {
+          lastTextNode = currentNode
+          currentNode = walker.nextNode()
+        }
+
+        if (lastTextNode && lastTextNode.textContent) {
+          range.setStart(lastTextNode, lastTextNode.textContent.length)
+          range.collapse(true)
+          selection.removeAllRanges()
+          selection.addRange(range)
+        }
       }
+
+      isUpdatingRef.current = false
     })
-  }, [onContentChange, saveCaretPosition, restoreCaretPosition])
+  }, [onContentChange])
 
   // Manejar teclas especiales
   const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {

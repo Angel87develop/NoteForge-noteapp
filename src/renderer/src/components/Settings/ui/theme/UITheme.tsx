@@ -25,33 +25,7 @@ export default function UITheme(): React.ReactElement {
             ]}
             onChange={(value) => updateUITheme({ theme: value as Theme })}
           />
-          
-          <Toggle
-            label="Transparency"
-            description="Enable window transparency"
-            checked={settings.ui.theme.transparency}
-            onChange={(checked) => updateUITheme({ transparency: checked })}
-          />
-          
-          {settings.ui.theme.transparency && (
-            <Slider
-              label="Transparency level"
-              value={settings.ui.theme.transparencyLevel}
-              min={0}
-              max={100}
-              unit="%"
-              onChange={(value) => updateUITheme({ transparencyLevel: value })}
-            />
-          )}
-          
-          <Toggle
-            label="Blur / Acrylic (Windows)"
-            description="Blur effect on the window"
-            checked={settings.ui.theme.blur}
-            onChange={(checked) => updateUITheme({ blur: checked })}
-            disabled={!settings.ui.theme.transparency}
-          />
-          
+
           <Slider
             label="Border radius"
             value={settings.ui.theme.borderRadius}

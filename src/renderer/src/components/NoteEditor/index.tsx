@@ -42,8 +42,7 @@ export default function NoteEditor({
   onNoteUpdate,
   onTagUpdate
 }: NoteEditorProps) {
-  const { settings } = useSettings()
-  const [viewMode, setViewMode] = useState<'markdown' | 'rendered'>('markdown')
+  const { settings, updateEditorBehavior } = useSettings()
   const [editedContent, setEditedContent] = useState(() => note?.content ?? '')
   const [editedTitle, setEditedTitle] = useState(() => note?.title ?? '')
   const [isEditingTitle, setIsEditingTitle] = useState(false)
@@ -169,17 +168,36 @@ export default function NoteEditor({
     }
   }, [handleSave])
 
-  // Escuchar evento de toggle preview desde shortcuts
+  // Escuchar evento de toggle preview desde shortcuts y actualizar el modo de vista global
   useEffect(() => {
     const handleTogglePreview = (): void => {
-      setViewMode(prev => prev === 'markdown' ? 'rendered' : 'markdown')
+      const currentView = settings.editor.behavior.view
+
+      let nextView: typeof currentView
+      switch (currentView) {
+        case 'editor-only':
+          // Mostrar editor + preview cuando actualmente solo se ve el editor
+          nextView = 'editor-preview'
+          break
+        case 'preview-only':
+          // Volver a editor + preview cuando solo se ve la preview
+          nextView = 'editor-preview'
+          break
+        case 'editor-preview':
+        default:
+          // Si ya estamos en editor + preview, volver a solo editor
+          nextView = 'editor-only'
+          break
+      }
+
+      updateEditorBehavior({ view: nextView })
     }
 
     window.addEventListener('toggle-preview', handleTogglePreview as EventListener)
     return () => {
       window.removeEventListener('toggle-preview', handleTogglePreview as EventListener)
     }
-  }, [])
+  }, [settings.editor.behavior.view, updateEditorBehavior])
 
   const handleTitleSave = (title: string) => {
     if (note) {
@@ -295,27 +313,30 @@ export default function NoteEditor({
 
   return (
     <div className="flex-1 h-full bg-linear-to-br from-ink-900 via-ink-900 to-ink-950 flex flex-col overflow-hidden">
-      {/* Header */}
-      <NoteEditorHeader
-        note={note}
-        notebooks={notebooks}
-        tags={tags}
-        isEditingTitle={isEditingTitle}
-        statusLabel={statusLabel}
-        showStatusDropdown={showStatusDropdown}
-        statusDropdownRef={statusDropdownRef}
-        wordCount={wordCount}
-        charCount={charCount}
-        onTitleEditStart={() => setIsEditingTitle(true)}
-        onTitleSave={handleTitleSave}
-        onTitleCancel={handleTitleCancel}
-        onStatusToggle={() => setShowStatusDropdown(!showStatusDropdown)}
-        onStatusChange={handleStatusChange}
-        onRemoveTag={handleRemoveTag}
-        onAddTagClick={() => setShowTagsModal(true)}
-      />
+      {/* Header / Top Bar (visibilidad controlada por ajustes de UI) */}
+      {settings.ui.visibility.showTopBar && (
+        <NoteEditorHeader
+          note={note}
+          notebooks={notebooks}
+          tags={tags}
+          isEditingTitle={isEditingTitle}
+          statusLabel={statusLabel}
+          showStatusDropdown={showStatusDropdown}
+          statusDropdownRef={statusDropdownRef}
+          wordCount={wordCount}
+          charCount={charCount}
+          onTitleEditStart={() => setIsEditingTitle(true)}
+          onTitleSave={handleTitleSave}
+          onTitleCancel={handleTitleCancel}
+          onStatusToggle={() => setShowStatusDropdown(!showStatusDropdown)}
+          onStatusChange={handleStatusChange}
+          onRemoveTag={handleRemoveTag}
+          onAddTagClick={() => setShowTagsModal(true)}
+        />
+      )
+    }
 
-      {/* Tags Modal */}
+    {/* Tags Modal */}
       <TagsModal
         isOpen={showTagsModal}
         newTagName={newTagName}
@@ -329,14 +350,15 @@ export default function NoteEditor({
       />
 
       {/* Content Area */}
-      <div className={`flex-1 overflow-y-auto scrollbar-hide relative ${viewMode === 'markdown' ? 'p-0' : 'px-8 pt-4 pb-8'}`}>
-        {viewMode === 'markdown' ? (
-          <div 
-            className="w-full h-full" 
-            style={{ 
-              fontFamily: settings.editor.appearance.fontFamily === 'custom' 
-                ? `'${settings.editor.appearance.customFontFamily}', ui-monospace, monospace`
-                : "'JetBrains Mono', ui-monospace, monospace",
+      <div className="flex-1 overflow-y-auto scrollbar-hide relative">
+        {settings.editor.behavior.view === 'editor-only' && (
+          <div
+            className="w-full h-full p-0"
+            style={{
+              fontFamily:
+                settings.editor.appearance.fontFamily === 'custom'
+                  ? `'${settings.editor.appearance.customFontFamily}', ui-monospace, monospace`
+                  : "'JetBrains Mono', ui-monospace, monospace",
               fontSize: `${settings.editor.appearance.fontSize}px`,
               lineHeight: settings.editor.appearance.lineHeight,
               maxWidth: settings.editor.appearance.maxTextWidth ? '800px' : '100%',
@@ -354,31 +376,99 @@ export default function NoteEditor({
               onKeyDown={handleKeyDown}
             />
           </div>
-        ) : (
-          <div className="max-w-3xl mx-auto">
+        )}
+
+        {settings.editor.behavior.view === 'preview-only' && (
+          <div className="max-w-3xl mx-auto px-8 pt-4 pb-8">
             <NoteContentRenderer content={editedContent} />
           </div>
         )}
 
-        {/* View Mode Toggle */}
+        {settings.editor.behavior.view === 'editor-preview' && (
+          <div className="flex h-full px-6 pt-4 pb-6 gap-6">
+            <div
+              className="flex-1 min-w-0"
+              style={{
+                fontFamily:
+                  settings.editor.appearance.fontFamily === 'custom'
+                    ? `'${settings.editor.appearance.customFontFamily}', ui-monospace, monospace`
+                    : "'JetBrains Mono', ui-monospace, monospace",
+                fontSize: `${settings.editor.appearance.fontSize}px`,
+                lineHeight: settings.editor.appearance.lineHeight
+              }}
+            >
+              <MarkdownEditor
+                content={editedContent}
+                onContentChange={setEditedContent}
+                onSave={() => {
+                  if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current)
+                  handleSave()
+                }}
+                onKeyDown={handleKeyDown}
+              />
+            </div>
+            <div className="flex-1 min-w-0 max-w-3xl mx-auto border-l border-ink-800 pl-6">
+              <NoteContentRenderer content={editedContent} />
+            </div>
+          </div>
+        )}
+
+        {/* View Mode Toggle (cambia el modo global de vista) */}
         <button
           onClick={() => {
             if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current)
             handleSave()
-            setViewMode(viewMode === 'markdown' ? 'rendered' : 'markdown')
+
+            const currentView = settings.editor.behavior.view
+            let nextView: typeof currentView
+
+            // Ciclo sencillo: editor-only -> editor-preview -> preview-only -> editor-only
+            if (currentView === 'editor-only') {
+              nextView = 'editor-preview'
+            } else if (currentView === 'editor-preview') {
+              nextView = 'preview-only'
+            } else {
+              nextView = 'editor-only'
+            }
+
+            updateEditorBehavior({ view: nextView })
           }}
-          className={`${viewMode === 'rendered' ? 'fixed' : 'absolute'} bottom-6 right-6 w-12 h-12 rounded-xl bg-ink-700 hover:bg-ink-600 border border-ink-600 flex items-center justify-center text-text-muted hover:text-amber transition-all shadow-lg hover:shadow-glow z-10 group`}
-          title={viewMode === 'markdown' ? 'Preview mode' : 'Edit mode'}
+          className="absolute bottom-6 right-6 w-12 h-12 rounded-xl bg-ink-700 hover:bg-ink-600 border border-ink-600 flex items-center justify-center text-text-muted hover:text-amber transition-all shadow-lg hover:shadow-glow z-10 group"
+          title={
+            settings.editor.behavior.view === 'editor-only'
+              ? 'Editor + live preview'
+              : settings.editor.behavior.view === 'editor-preview'
+                ? 'Preview only'
+                : 'Editor only'
+          }
         >
-          {viewMode === 'markdown' ? (
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="group-hover:scale-110 transition-transform">
-              <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.5" />
-              <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z" stroke="currentColor" strokeWidth="1.5" />
-            </svg>
-          ) : (
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="group-hover:scale-110 transition-transform">
+          {settings.editor.behavior.view === 'preview-only' ? (
+            // Icono de modo edición
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              className="group-hover:scale-110 transition-transform"
+            >
               <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
               <rect x="4" y="4" width="16" height="16" rx="2" stroke="currentColor" strokeWidth="1.5" />
+            </svg>
+          ) : (
+            // Icono de ojo (modo preview / mixto)
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              className="group-hover:scale-110 transition-transform"
+            >
+              <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.5" />
+              <path
+                d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"
+                stroke="currentColor"
+                strokeWidth="1.5"
+              />
             </svg>
           )}
         </button>

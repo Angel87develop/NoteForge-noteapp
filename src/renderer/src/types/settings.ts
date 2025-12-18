@@ -76,9 +76,6 @@ export interface KeyboardSettings {
 
 export interface UITheme {
   theme: Theme
-  transparency: boolean
-  transparencyLevel: number // 0-100
-  blur: boolean
   borderRadius: number
   density: UIDensity
   animations: boolean
@@ -155,9 +152,6 @@ export const defaultSettings: Settings = {
   ui: {
     theme: {
       theme: 'dark',
-      transparency: false,
-      transparencyLevel: 80,
-      blur: true,
       borderRadius: 8,
       density: 'normal',
       animations: true,
