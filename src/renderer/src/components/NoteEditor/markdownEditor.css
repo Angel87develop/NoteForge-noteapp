@@ -31,6 +31,8 @@
   word-wrap: break-word;
   caret-color: var(--accent-primary);
   cursor: text;
+  direction: ltr;
+  unicode-bidi: plaintext;
 }
 
 /* Placeholder */
@@ -46,6 +48,8 @@
   display: block;
   min-height: 1.8em;
   line-height: 1.8;
+  direction: ltr;
+  unicode-bidi: plaintext;
 }
 
 /* Empty line */

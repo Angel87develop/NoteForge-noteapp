@@ -20,8 +20,13 @@ interface NoteContentRendererProps {
 export default function NoteContentRenderer({ content }: NoteContentRendererProps) {
   const { settings } = useSettings()
   const containerRef = useRef<HTMLDivElement | null>(null)
+  const diagramCounterRef = useRef(0)
 
   const markdownSettings = settings.editor.markdown
+
+  // Detectar el tema actual
+  const isDarkTheme = settings.ui.theme.theme === 'dark' || 
+    (settings.ui.theme.theme === 'system' && !window.matchMedia('(prefers-color-scheme: light)').matches)
 
   const remarkPlugins: PluggableList = []
 
@@ -51,17 +56,84 @@ export default function NoteContentRenderer({ content }: NoteContentRendererProp
   useEffect(() => {
     if (!markdownSettings.diagrams) return
 
+    // Inicializar Mermaid con el tema correcto
     try {
-      mermaid.initialize({ startOnLoad: false, theme: 'dark' })
-      if (containerRef.current) {
-        const options: RunOptions = {
-          nodes: containerRef.current.querySelectorAll('.mermaid')
-        }
-
-        mermaid.run(options)
-      }
+      mermaid.initialize({ 
+        startOnLoad: false, 
+        theme: isDarkTheme ? 'dark' : 'default',
+        securityLevel: 'loose',
+        fontFamily: 'DM Sans, sans-serif'
+      })
     } catch (error) {
-      console.error('Error initializing Mermaid diagrams:', error)
+      console.error('Error initializing Mermaid:', error)
+    }
+  }, [markdownSettings.diagrams, isDarkTheme])
+
+  // Renderizar diagramas Mermaid después de que el contenido se haya renderizado
+  useEffect(() => {
+    if (!markdownSettings.diagrams || !containerRef.current) return
+
+    // Resetear el contador cuando cambia el contenido
+    diagramCounterRef.current = 0
+
+    // Limpiar diagramas procesados y SVG anteriores cuando cambia el contenido
+    const processedElements = containerRef.current.querySelectorAll('.mermaid[data-processed]')
+    processedElements.forEach((el) => {
+      el.removeAttribute('data-processed')
+      // Limpiar SVG anterior si existe
+      const svg = el.querySelector('svg')
+      if (svg) {
+        svg.remove()
+      }
+    })
+
+    // Función para renderizar diagramas
+    const renderDiagrams = () => {
+      if (!containerRef.current) return
+
+      try {
+        const mermaidElements = containerRef.current.querySelectorAll('.mermaid:not([data-processed])')
+        
+        if (mermaidElements && mermaidElements.length > 0) {
+          // Convertir NodeList a Array para mejor manejo
+          const elementsArray = Array.from(mermaidElements) as HTMLElement[]
+          
+          // Renderizar cada diagrama individualmente para mejor control
+          Promise.all(
+            elementsArray.map((element) => {
+              return mermaid.run({
+                nodes: [element]
+              }).then(() => {
+                element.setAttribute('data-processed', 'true')
+              }).catch((error) => {
+                console.error('Error rendering Mermaid diagram:', error, element)
+                // Marcar como procesado incluso si falla para evitar loops infinitos
+                element.setAttribute('data-processed', 'true')
+              })
+            })
+          ).catch((error) => {
+            console.error('Error in batch Mermaid rendering:', error)
+          })
+        }
+      } catch (error) {
+        console.error('Error processing Mermaid diagrams:', error)
+      }
+    }
+
+    // Usar requestAnimationFrame para asegurar que el DOM esté completamente renderizado
+    let timeoutId: NodeJS.Timeout | null = null
+    const rafId = requestAnimationFrame(() => {
+      // Doble check con un pequeño delay para asegurar que React terminó de renderizar
+      timeoutId = setTimeout(() => {
+        renderDiagrams()
+      }, 50)
+    })
+
+    return () => {
+      cancelAnimationFrame(rafId)
+      if (timeoutId) {
+        clearTimeout(timeoutId)
+      }
     }
   }, [content, markdownSettings.diagrams])
 
@@ -90,8 +162,14 @@ export default function NoteContentRenderer({ content }: NoteContentRendererProp
 
       if (!inline && language === 'mermaid') {
         if (markdownSettings.diagrams) {
+          // Generar un ID único para cada diagrama usando un contador
+          diagramCounterRef.current += 1
+          const diagramId = `mermaid-diagram-${diagramCounterRef.current}`
+          
           return (
             <div
+              key={diagramId}
+              id={diagramId}
               className="mermaid my-4"
               {...props}
             >
@@ -114,6 +192,41 @@ export default function NoteContentRenderer({ content }: NoteContentRendererProp
       )
     }
   }
+
+  // Efecto adicional para asegurar que los diagramas se rendericen cuando el componente se monta
+  useEffect(() => {
+    if (!markdownSettings.diagrams || !containerRef.current) return
+
+    // Verificar si hay diagramas sin procesar después de un breve delay
+    const checkAndRender = () => {
+      if (!containerRef.current) return
+      
+      const unprocessedElements = containerRef.current.querySelectorAll('.mermaid:not([data-processed])')
+      if (unprocessedElements.length > 0) {
+        const elementsArray = Array.from(unprocessedElements) as HTMLElement[]
+        
+        Promise.all(
+          elementsArray.map((element) => {
+            return mermaid.run({
+              nodes: [element]
+            }).then(() => {
+              element.setAttribute('data-processed', 'true')
+            }).catch((error) => {
+              console.error('Error rendering Mermaid diagram in check:', error)
+              element.setAttribute('data-processed', 'true')
+            })
+          })
+        ).catch((error) => {
+          console.error('Error in check Mermaid rendering:', error)
+        })
+      }
+    }
+
+    // Verificar después de que React termine de renderizar
+    const timeoutId = setTimeout(checkAndRender, 200)
+
+    return () => clearTimeout(timeoutId)
+  }, [markdownSettings.diagrams])
 
   return (
     <div className="markdown-content min-h-full" ref={containerRef}>

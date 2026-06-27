@@ -631,3 +631,24 @@ body {
   border: 1px solid;
   border-image: linear-gradient(135deg, var(--accent-primary), var(--accent-muted)) 1;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MERMAID DIAGRAMS
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.markdown-content .mermaid {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 1.5rem 0;
+  padding: 1rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  overflow-x: auto;
+}
+
+.markdown-content .mermaid svg {
+  max-width: 100%;
+  height: auto;
+}

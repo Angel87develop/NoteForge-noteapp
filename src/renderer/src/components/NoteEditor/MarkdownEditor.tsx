@@ -90,6 +90,81 @@ const renderContentWithStyles = (text: string): string => {
   return htmlLines.join('')
 }
 
+const getNodeTextLength = (node: Node): number => {
+  if (node.nodeType === Node.TEXT_NODE) {
+    return node.textContent?.length || 0
+  }
+  if (node.nodeType === Node.ELEMENT_NODE && (node as Element).tagName === 'BR') {
+    return 0
+  }
+  let length = 0
+  for (const child of Array.from(node.childNodes)) {
+    length += getNodeTextLength(child)
+  }
+  return length
+}
+
+const findFirstTextNode = (node: Node): Text | null => {
+  if (node.nodeType === Node.TEXT_NODE) {
+    return node as Text
+  }
+  for (const child of Array.from(node.childNodes)) {
+    const found = findFirstTextNode(child)
+    if (found) return found
+  }
+  return null
+}
+
+const findLastTextNode = (node: Node): Text | null => {
+  if (node.nodeType === Node.TEXT_NODE) {
+    return node as Text
+  }
+  const children = Array.from(node.childNodes)
+  for (let i = children.length - 1; i >= 0; i--) {
+    const found = findLastTextNode(children[i])
+    if (found) return found
+  }
+  return null
+}
+
+const setRangeAtLineStart = (range: Range, lineDiv: Element): void => {
+  if (lineDiv.classList.contains('md-empty')) {
+    range.selectNodeContents(lineDiv)
+    range.collapse(true)
+    return
+  }
+
+  const textNode = findFirstTextNode(lineDiv)
+  if (textNode) {
+    range.setStart(textNode, 0)
+    range.collapse(true)
+    return
+  }
+
+  const text = document.createTextNode('')
+  lineDiv.insertBefore(text, lineDiv.firstChild)
+  range.setStart(text, 0)
+  range.collapse(true)
+}
+
+const setRangeAtLineEnd = (range: Range, lineDiv: Element): void => {
+  if (lineDiv.classList.contains('md-empty')) {
+    range.selectNodeContents(lineDiv)
+    range.collapse(false)
+    return
+  }
+
+  const textNode = findLastTextNode(lineDiv)
+  if (textNode) {
+    const length = textNode.textContent?.length || 0
+    range.setStart(textNode, length)
+    range.collapse(true)
+    return
+  }
+
+  setRangeAtLineStart(range, lineDiv)
+}
+
 // Función para extraer texto plano del HTML
 const extractTextFromHtml = (element: HTMLElement): string => {
   const lines: string[] = []
@@ -131,7 +206,18 @@ export default function MarkdownEditor({
       if (found) return true
 
       if (node === range.startContainer) {
-        position += range.startOffset
+        if (node.nodeType === Node.TEXT_NODE) {
+          position += range.startOffset
+        } else if (node.nodeType === Node.ELEMENT_NODE) {
+          const element = node as Element
+          if (element.tagName === 'BR') {
+            // El cursor sobre <br> no añade caracteres de texto
+          } else {
+            for (let i = 0; i < range.startOffset && i < node.childNodes.length; i++) {
+              position += getNodeTextLength(node.childNodes[i])
+            }
+          }
+        }
         found = true
         return true
       }
@@ -198,12 +284,16 @@ export default function MarkdownEditor({
         
         if (element.tagName === 'BR') {
           if (currentPos === position) {
-            range.setStartAfter(node)
-            range.collapse(true)
+            const lineParent = element.parentElement
+            if (lineParent?.classList.contains('md-line')) {
+              setRangeAtLineStart(range, lineParent)
+            } else {
+              range.setStartAfter(node)
+              range.collapse(true)
+            }
             found = true
             return true
           }
-          currentPos += 1
         } else if (element.classList?.contains('md-line')) {
           for (const child of Array.from(node.childNodes)) {
             if (walkNodes(child)) return true
@@ -212,9 +302,9 @@ export default function MarkdownEditor({
           const nextSibling = node.nextSibling
           if (nextSibling && !found) {
             if (currentPos === position) {
-              // Posicionar al inicio de la siguiente línea
-              range.setStart(nextSibling, 0)
-              range.collapse(true)
+              if (nextSibling instanceof Element && nextSibling.classList.contains('md-line')) {
+                setRangeAtLineStart(range, nextSibling)
+              }
               found = true
               return true
             }
@@ -231,10 +321,16 @@ export default function MarkdownEditor({
 
     walkNodes(editorRef.current)
 
-    // Si no encontramos la posición exacta, posicionar al final del último nodo válido
-    if (!found && lastValidNode) {
-      range.setStart(lastValidNode, lastValidOffset)
-      range.collapse(true)
+    // Si no encontramos la posición exacta, posicionar al final del documento
+    if (!found) {
+      const lines = editorRef.current.querySelectorAll('.md-line')
+      const lastLine = lines[lines.length - 1]
+      if (lastLine instanceof Element) {
+        setRangeAtLineEnd(range, lastLine)
+      } else if (lastValidNode) {
+        range.setStart(lastValidNode, lastValidOffset)
+        range.collapse(true)
+      }
       found = true
     }
 
@@ -290,13 +386,7 @@ export default function MarkdownEditor({
       if (caretPos !== null) {
         restoreCaretPosition(caretPos)
       } else {
-        // Fallback: intentar mantener la posición relativa
-        // Calcular la nueva posición basándose en la longitud del contenido
-        const newLength = newContent.length
-        if (newLength > 0) {
-          // Intentar posicionar cerca del final, pero no exactamente al final
-          restoreCaretPosition(Math.min(newLength - 1, newLength))
-        }
+        restoreCaretPosition(newContent.length)
       }
 
       isUpdatingRef.current = false
@@ -407,6 +497,7 @@ export default function MarkdownEditor({
         onBlur={onSave}
         spellCheck={false}
         className="markdown-contenteditable"
+        dir="ltr"
         data-placeholder="Start writing in Markdown..."
       />
     </div>

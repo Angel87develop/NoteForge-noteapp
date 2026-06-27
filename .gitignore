@@ -22,5 +22,9 @@ Thumbs.db
 
 # Entorno
 .env
-.env.local
+.env.local  
 .env.production
+
+#.cursor 
+.cursor/
+.cursor/Rules/
