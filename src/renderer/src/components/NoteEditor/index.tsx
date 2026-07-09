@@ -379,8 +379,17 @@ export default function NoteEditor({
         )}
 
         {settings.editor.behavior.view === 'preview-only' && (
-          <div className="max-w-3xl mx-auto px-8 pt-4 pb-8">
-            <NoteContentRenderer content={editedContent} />
+          <div className="w-full h-full max-w-3xl mx-auto">
+            <MarkdownEditor
+              content={editedContent}
+              variant="preview"
+              onContentChange={setEditedContent}
+              onSave={() => {
+                if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current)
+                handleSave()
+              }}
+              onKeyDown={handleKeyDown}
+            />
           </div>
         )}
 

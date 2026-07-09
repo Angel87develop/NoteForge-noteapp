@@ -4,15 +4,54 @@ import React, { useRef, useEffect, useCallback } from 'react'
 import { sanitizeContent } from '../../utils/markdownUtils'
 import './markdownEditor.css'
 
+type MarkdownEditorVariant = 'source' | 'preview'
+
 interface MarkdownEditorProps {
   content: string
   onContentChange: (content: string) => void
   onSave: () => void
   onKeyDown: (e: React.KeyboardEvent) => void
+  variant?: MarkdownEditorVariant
+}
+
+const hidden = (text: string, preview: boolean): string =>
+  preview ? `<span class="md-syntax-hidden">${text}</span>` : text
+
+const processInlineFormatting = (line: string, preview: boolean): string => {
+  const escapeHtml = (str: string) =>
+    str
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;')
+
+  let processedLine = escapeHtml(line)
+
+  processedLine = processedLine.replace(/`([^`]+)`/g, (_match, inner) =>
+    preview
+      ? `<span class="md-code">${hidden('`', preview)}${inner}${hidden('`', preview)}</span>`
+      : `<span class="md-code">\`${inner}\`</span>`
+  )
+
+  processedLine = processedLine.replace(/\*\*([^*]+)\*\*/g, (_match, inner) =>
+    preview
+      ? `<span class="md-bold">${hidden('**', preview)}${inner}${hidden('**', preview)}</span>`
+      : `<span class="md-bold">**${inner}**</span>`
+  )
+
+  processedLine = processedLine.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, (_match, inner) =>
+    preview
+      ? `<span class="md-italic">${hidden('*', preview)}${inner}${hidden('*', preview)}</span>`
+      : `<span class="md-italic">*${inner}*</span>`
+  )
+
+  return processedLine
 }
 
 // Función para renderizar el contenido con estilos inline
-const renderContentWithStyles = (text: string): string => {
+const renderContentWithStyles = (text: string, variant: MarkdownEditorVariant = 'source'): string => {
+  const preview = variant === 'preview'
   if (!text) return '<div class="md-line md-empty"><br></div>'
 
   const lines = text.split('\n')
@@ -38,8 +77,17 @@ const renderContentWithStyles = (text: string): string => {
     const headingMatch = line.match(/^(#{1,6})\s+(.*)$/)
     if (headingMatch) {
       const level = headingMatch[1].length
-      const content = headingMatch[2]
-      htmlLines.push(`<div class="md-line md-h${level}"><span class="md-hash">${headingMatch[1]}</span> ${escapeHtml(content)}</div>`)
+      const headingContent = headingMatch[2]
+      const prefix = `${headingMatch[1]} `
+      if (preview) {
+        htmlLines.push(
+          `<div class="md-line md-h${level}">${hidden(prefix, preview)}${processInlineFormatting(headingContent, preview)}</div>`
+        )
+      } else {
+        htmlLines.push(
+          `<div class="md-line md-h${level}"><span class="md-hash">${headingMatch[1]}</span> ${escapeHtml(headingContent)}</div>`
+        )
+      }
       return
     }
 
@@ -48,8 +96,16 @@ const renderContentWithStyles = (text: string): string => {
     if (ulMatch) {
       const indent = ulMatch[1]
       const marker = ulMatch[2]
-      const content = ulMatch[3]
-      htmlLines.push(`<div class="md-line md-list">${escapeHtml(indent)}<span class="md-marker">${marker}</span> ${escapeHtml(content)}</div>`)
+      const listContent = ulMatch[3]
+      if (preview) {
+        htmlLines.push(
+          `<div class="md-line md-list md-list-ul">${escapeHtml(indent)}${hidden(`${marker} `, preview)}${processInlineFormatting(listContent, preview)}</div>`
+        )
+      } else {
+        htmlLines.push(
+          `<div class="md-line md-list">${escapeHtml(indent)}<span class="md-marker">${marker}</span> ${escapeHtml(listContent)}</div>`
+        )
+      }
       return
     }
 
@@ -58,33 +114,37 @@ const renderContentWithStyles = (text: string): string => {
     if (olMatch) {
       const indent = olMatch[1]
       const marker = olMatch[2]
-      const content = olMatch[3]
-      htmlLines.push(`<div class="md-line md-list">${escapeHtml(indent)}<span class="md-marker">${marker}</span> ${escapeHtml(content)}</div>`)
+      const listContent = olMatch[3]
+      if (preview) {
+        htmlLines.push(
+          `<div class="md-line md-list md-list-ol">${escapeHtml(indent)}${hidden(`${marker} `, preview)}${processInlineFormatting(listContent, preview)}</div>`
+        )
+      } else {
+        htmlLines.push(
+          `<div class="md-line md-list">${escapeHtml(indent)}<span class="md-marker">${marker}</span> ${escapeHtml(listContent)}</div>`
+        )
+      }
       return
     }
 
     // Detectar blockquotes
     const blockquoteMatch = line.match(/^>\s*(.*)$/)
     if (blockquoteMatch) {
-      const content = blockquoteMatch[1]
-      htmlLines.push(`<div class="md-line md-blockquote"><span class="md-quote-marker">&gt;</span> ${escapeHtml(content)}</div>`)
+      const quoteContent = blockquoteMatch[1]
+      if (preview) {
+        htmlLines.push(
+          `<div class="md-line md-blockquote">${hidden('> ', preview)}${processInlineFormatting(quoteContent, preview)}</div>`
+        )
+      } else {
+        htmlLines.push(
+          `<div class="md-line md-blockquote"><span class="md-quote-marker">&gt;</span> ${escapeHtml(quoteContent)}</div>`
+        )
+      }
       return
     }
 
-    // Detectar código inline y bold/italic
-    let processedLine = escapeHtml(line)
-    
-    // Code inline
-    processedLine = processedLine.replace(/`([^`]+)`/g, '<span class="md-code">`$1`</span>')
-    
-    // Bold
-    processedLine = processedLine.replace(/\*\*([^*]+)\*\*/g, '<span class="md-bold">**$1**</span>')
-    
-    // Italic
-    processedLine = processedLine.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<span class="md-italic">*$1*</span>')
-
     // Línea normal
-    htmlLines.push(`<div class="md-line">${processedLine}</div>`)
+    htmlLines.push(`<div class="md-line">${processInlineFormatting(line, preview)}</div>`)
   })
 
   return htmlLines.join('')
@@ -187,7 +247,8 @@ export default function MarkdownEditor({
   content,
   onContentChange,
   onSave,
-  onKeyDown
+  onKeyDown,
+  variant = 'source'
 }: MarkdownEditorProps) {
   const editorRef = useRef<HTMLDivElement>(null)
   const isUpdatingRef = useRef(false)
@@ -346,16 +407,16 @@ export default function MarkdownEditor({
     
     if (content !== lastContentRef.current) {
       const caretPos = saveCaretPosition()
-      editorRef.current.innerHTML = renderContentWithStyles(content)
+      editorRef.current.innerHTML = renderContentWithStyles(content, variant)
       lastContentRef.current = content
       restoreCaretPosition(caretPos)
     }
-  }, [content, saveCaretPosition, restoreCaretPosition])
+  }, [content, variant, saveCaretPosition, restoreCaretPosition])
 
   // Inicializar el contenido
   useEffect(() => {
     if (editorRef.current && !editorRef.current.innerHTML) {
-      editorRef.current.innerHTML = renderContentWithStyles(content)
+      editorRef.current.innerHTML = renderContentWithStyles(content, variant)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -379,7 +440,7 @@ export default function MarkdownEditor({
       if (!editor) return
 
       // Actualizar el HTML estilizado
-      editor.innerHTML = renderContentWithStyles(newContent)
+      editor.innerHTML = renderContentWithStyles(newContent, variant)
 
       // Restaurar la posición del cursor
       // Si no se pudo guardar la posición, intentar calcularla basándose en el cambio de contenido
@@ -391,7 +452,7 @@ export default function MarkdownEditor({
 
       isUpdatingRef.current = false
     })
-  }, [onContentChange, saveCaretPosition, restoreCaretPosition])
+  }, [onContentChange, variant, saveCaretPosition, restoreCaretPosition])
 
   // Manejar teclas especiales
   const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
@@ -416,7 +477,7 @@ export default function MarkdownEditor({
       onContentChange(newContent)
       
       // Re-renderizar y posicionar cursor después del salto de línea
-      editorRef.current.innerHTML = renderContentWithStyles(newContent)
+      editorRef.current.innerHTML = renderContentWithStyles(newContent, variant)
       restoreCaretPosition(caretPos + 1)
       return
     }
@@ -435,7 +496,7 @@ export default function MarkdownEditor({
       lastContentRef.current = newContent
       onContentChange(newContent)
       
-      editorRef.current.innerHTML = renderContentWithStyles(newContent)
+      editorRef.current.innerHTML = renderContentWithStyles(newContent, variant)
       restoreCaretPosition(caretPos + 2)
       return
     }
@@ -464,7 +525,7 @@ export default function MarkdownEditor({
 
     // Pasar al handler original
     onKeyDown(e)
-  }, [handleInput, onKeyDown, onContentChange, saveCaretPosition, restoreCaretPosition])
+  }, [handleInput, onKeyDown, onContentChange, variant, saveCaretPosition, restoreCaretPosition])
 
   // Manejar pegado
   const handlePaste = useCallback((e: React.ClipboardEvent<HTMLDivElement>) => {
@@ -485,8 +546,18 @@ export default function MarkdownEditor({
     }
   }, [handleInput])
 
+  const containerClass =
+    variant === 'preview'
+      ? 'markdown-editor-container markdown-preview-mode'
+      : 'markdown-editor-container'
+
+  const editorClass =
+    variant === 'preview'
+      ? 'markdown-contenteditable markdown-content markdown-preview-editable'
+      : 'markdown-contenteditable'
+
   return (
-    <div className="relative w-full h-full markdown-editor-container">
+    <div className={`relative w-full h-full ${containerClass}`}>
       <div
         ref={editorRef}
         contentEditable
@@ -496,7 +567,7 @@ export default function MarkdownEditor({
         onPaste={handlePaste}
         onBlur={onSave}
         spellCheck={false}
-        className="markdown-contenteditable"
+        className={editorClass}
         dir="ltr"
         data-placeholder="Start writing in Markdown..."
       />

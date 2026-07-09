@@ -5,26 +5,21 @@ import { homedir } from 'os'
 import { app } from 'electron'
 
 /**
- * Obtiene la ruta de la carpeta de documentos del usuario según el sistema operativo
+ * Obtiene la ruta de datos locales del usuario (AppData\Local en Windows)
  */
-export function getDocumentsPath(): string {
-  const docPath = app.getPath('documents')
-  if (docPath && existsSync(docPath)) return docPath
+export function getLocalAppDataPath(): string {
+  if (process.env.LOCALAPPDATA) return process.env.LOCALAPPDATA
   const home = homedir()
-  const candidates = ['Documents', 'Documentos', 'My Documents']
-  for (const name of candidates) {
-    const p = join(home, name)
-    if (existsSync(p)) return p
-  }
-  return join(home, 'Documents')
+  if (process.platform === 'win32') return join(home, 'AppData', 'Local')
+  if (process.platform === 'darwin') return join(home, 'Library', 'Application Support')
+  return join(home, '.local', 'share')
 }
 
 /**
  * Obtiene la ruta de la carpeta noteforge-notes
  */
 export function getNoteForgeNotesPath(): string {
-  const documentsPath = getDocumentsPath()
-  return join(documentsPath, 'noteforge-notes')
+  return join(getLocalAppDataPath(), 'noteforge-notes')
 }
 
 /**
