@@ -4,7 +4,7 @@ export type MarkdownDialect = 'commonmark' | 'gfm'
 export type EditorView = 'editor-only' | 'editor-preview' | 'preview-only'
 export type UIDensity = 'compact' | 'normal' | 'comfortable'
 export type IconSet = 'minimal' | 'outline' | 'filled'
-export type KeyboardProfile = 'default' | 'vim' | 'emacs'
+export type KeyboardProfile = 'default'
 
 export type FontFamily = 
   | 'JetBrains Mono'

@@ -1,5 +1,6 @@
 /* eslint-disable prettier/prettier */
 import React from 'react'
+import { matchesSearch } from '../../utils/settingsSearch'
 
 interface SelectOption {
   value: string
@@ -13,9 +14,29 @@ interface SelectProps {
   options: SelectOption[]
   onChange: (value: string) => void
   disabled?: boolean
+  searchQuery?: string
+  searchKeywords?: string[]
 }
 
-export default function Select({ label, description, value, options, onChange, disabled = false }: SelectProps): React.ReactElement {
+export default function Select({
+  label,
+  description,
+  value,
+  options,
+  onChange,
+  disabled = false,
+  searchQuery,
+  searchKeywords
+}: SelectProps): React.ReactElement | null {
+  if (!matchesSearch(searchQuery ?? '', [
+    label,
+    description,
+    ...(searchKeywords ?? []),
+    ...options.map((o) => o.label)
+  ])) {
+    return null
+  }
+
   return (
     <div className="py-3">
       <label className="block text-sm font-medium text-text-primary mb-2">

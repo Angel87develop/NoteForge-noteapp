@@ -1,4 +1,7 @@
 /* eslint-disable prettier/prettier */
+import React from 'react'
+import { matchesSearch } from '../../utils/settingsSearch'
+
 interface InputProps {
   label: string
   description?: string
@@ -7,17 +10,25 @@ interface InputProps {
   placeholder?: string
   type?: 'text' | 'number'
   disabled?: boolean
+  searchQuery?: string
+  searchKeywords?: string[]
 }
 
-export default function Input({ 
-  label, 
-  description, 
-  value, 
-  onChange, 
-  placeholder, 
-  type = 'text', 
-  disabled = false 
-}: InputProps) {
+export default function Input({
+  label,
+  description,
+  value,
+  onChange,
+  placeholder,
+  type = 'text',
+  disabled = false,
+  searchQuery,
+  searchKeywords
+}: InputProps): React.ReactElement | null {
+  if (!matchesSearch(searchQuery ?? '', [label, description, placeholder, ...(searchKeywords ?? [])])) {
+    return null
+  }
+
   return (
     <div className="py-3">
       <label className="block text-sm font-medium text-text-primary mb-2">

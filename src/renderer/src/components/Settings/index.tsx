@@ -1,11 +1,12 @@
 /* eslint-disable prettier/prettier */
-import React, { useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import EditorSettings from './sections/EditorSettings'
 import KeyboardSettings from './sections/KeyboardSettings'
 import UISettings from './sections/UISettings'
 import AboutSettings from './sections/AboutSettings'
+import { matchesSearch, sectionSearchKeywords, SettingsSectionId } from '../../utils/settingsSearch'
 
-type SettingsSection = 'editor' | 'keyboard' | 'ui' | 'about'
+type SettingsSection = SettingsSectionId
 
 interface SettingsProps {
   onClose: () => void
@@ -61,20 +62,40 @@ export default function Settings({ onClose }: SettingsProps): React.ReactElement
   const [activeSection, setActiveSection] = useState<SettingsSection>('editor')
   const [searchQuery, setSearchQuery] = useState('')
 
+  const filteredSections = useMemo(() => {
+    if (!searchQuery.trim()) return sections
+    return sections.filter((section) =>
+      matchesSearch(searchQuery, [section.label, ...sectionSearchKeywords[section.id]])
+    )
+  }, [searchQuery])
+
+  useEffect(() => {
+    if (!searchQuery.trim()) return
+    if (filteredSections.length === 0) return
+    if (!filteredSections.some((section) => section.id === activeSection)) {
+      setActiveSection(filteredSections[0].id)
+    }
+  }, [searchQuery, filteredSections, activeSection])
+
   const renderSection = (): React.ReactElement => {
     switch (activeSection) {
       case 'editor':
-        return <EditorSettings />
+        return <EditorSettings searchQuery={searchQuery} />
       case 'keyboard':
-        return <KeyboardSettings />
+        return <KeyboardSettings searchQuery={searchQuery} />
       case 'ui':
-        return <UISettings />
+        return <UISettings searchQuery={searchQuery} />
       case 'about':
-        return <AboutSettings />
+        return <AboutSettings searchQuery={searchQuery} />
       default:
-        return <EditorSettings />
+        return <EditorSettings searchQuery={searchQuery} />
     }
   }
+
+  const activeLabel = sections.find((s) => s.id === activeSection)?.label
+  const panelTitle = searchQuery.trim()
+    ? `Search: "${searchQuery.trim()}"`
+    : activeLabel
 
   return (
     <div className="fixed inset-0 z-50 flex bg-black/60 backdrop-blur-sm animate-fade-in">
@@ -127,36 +148,40 @@ export default function Settings({ onClose }: SettingsProps): React.ReactElement
 
           {/* Sections List */}
           <div className="flex-1 overflow-y-auto scrollbar-hide py-2">
-            {sections.map((section) => (
-              <button
-                key={section.id}
-                onClick={() => setActiveSection(section.id)}
-                className={`w-full flex items-center gap-3 px-4 py-3 mx-2 rounded-lg transition-all ${
-                  activeSection === section.id
-                    ? 'border-l-2 text-text-primary'
-                    : 'text-text-primary'
-                }`}
-                style={activeSection === section.id 
-                  ? { backgroundColor: 'var(--accent-glow)', borderLeftColor: 'var(--accent-primary)' }
-                  : {}
-                }
-                onMouseEnter={(e) => {
-                  if (activeSection !== section.id) {
-                    (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--bg-hover)'
+            {filteredSections.length === 0 ? (
+              <p className="px-4 py-3 text-sm text-text-muted">No matching sections</p>
+            ) : (
+              filteredSections.map((section) => (
+                <button
+                  key={section.id}
+                  onClick={() => setActiveSection(section.id)}
+                  className={`w-full flex items-center gap-3 px-4 py-3 mx-2 rounded-lg transition-all ${
+                    activeSection === section.id
+                      ? 'border-l-2 text-text-primary'
+                      : 'text-text-primary'
+                  }`}
+                  style={activeSection === section.id
+                    ? { backgroundColor: 'var(--accent-glow)', borderLeftColor: 'var(--accent-primary)' }
+                    : {}
                   }
-                }}
-                onMouseLeave={(e) => {
-                  if (activeSection !== section.id) {
-                    (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'
-                  }
-                }}
-              >
-                <span className={activeSection === section.id ? 'text-amber' : 'text-text-primary'}>
-                  {section.icon}
-                </span>
-                <span className="text-sm font-medium">{section.label}</span>
-              </button>
-            ))}
+                  onMouseEnter={(e) => {
+                    if (activeSection !== section.id) {
+                      (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--bg-hover)'
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (activeSection !== section.id) {
+                      (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'
+                    }
+                  }}
+                >
+                  <span className={activeSection === section.id ? 'text-amber' : 'text-text-primary'}>
+                    {section.icon}
+                  </span>
+                  <span className="text-sm font-medium">{section.label}</span>
+                </button>
+              ))
+            )}
           </div>
         </div>
 
@@ -165,17 +190,25 @@ export default function Settings({ onClose }: SettingsProps): React.ReactElement
           {/* Panel Header */}
           <div className="p-6 border-b" style={{ borderColor: 'var(--border-default)' }}>
             <h3 className="text-2xl font-serif font-semibold text-text-primary">
-              {sections.find((s) => s.id === activeSection)?.label}
+              {panelTitle}
             </h3>
+            {searchQuery.trim() && activeLabel && (
+              <p className="text-sm text-text-muted mt-1">{activeLabel}</p>
+            )}
           </div>
 
           {/* Content */}
           <div className="flex-1 overflow-y-auto scrollbar-hide p-6">
-            <div className="max-w-3xl">{renderSection()}</div>
+            <div className="max-w-3xl">
+              {filteredSections.length === 0 ? (
+                <p className="text-sm text-text-muted">No settings found for &quot;{searchQuery.trim()}&quot;</p>
+              ) : (
+                renderSection()
+              )}
+            </div>
           </div>
         </div>
       </div>
     </div>
   )
 }
-

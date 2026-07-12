@@ -66,6 +66,9 @@ export const loadSettings = (): Settings => {
         keyboard: {
           ...defaultSettings.keyboard,
           ...parsed.keyboard,
+          profile: ['vim', 'emacs'].includes(parsed.keyboard?.profile)
+            ? 'default'
+            : (parsed.keyboard?.profile ?? defaultSettings.keyboard.profile),
           shortcuts
         },
         ui: {

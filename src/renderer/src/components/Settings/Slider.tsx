@@ -1,4 +1,7 @@
 /* eslint-disable prettier/prettier */
+import React from 'react'
+import { matchesSearch } from '../../utils/settingsSearch'
+
 interface SliderProps {
   label: string
   description?: string
@@ -9,19 +12,27 @@ interface SliderProps {
   unit?: string
   onChange: (value: number) => void
   disabled?: boolean
+  searchQuery?: string
+  searchKeywords?: string[]
 }
 
-export default function Slider({ 
-  label, 
-  description, 
-  value, 
-  min, 
-  max, 
-  step = 1, 
-  unit = '', 
-  onChange, 
-  disabled = false 
-}: SliderProps) {
+export default function Slider({
+  label,
+  description,
+  value,
+  min,
+  max,
+  step = 1,
+  unit = '',
+  onChange,
+  disabled = false,
+  searchQuery,
+  searchKeywords
+}: SliderProps): React.ReactElement | null {
+  if (!matchesSearch(searchQuery ?? '', [label, description, ...(searchKeywords ?? [])])) {
+    return null
+  }
+
   return (
     <div className="py-3">
       <div className="flex items-center justify-between mb-2">

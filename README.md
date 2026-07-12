@@ -110,8 +110,6 @@ Configure nearly every aspect of the editor.
 
 - Fully customizable shortcuts
 - Default profile
-- Vim profile
-- Emacs profile
 - Import / Export configurations
 
 ---

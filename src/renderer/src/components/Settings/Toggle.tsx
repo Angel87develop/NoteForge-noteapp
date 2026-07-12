@@ -1,5 +1,6 @@
 /* eslint-disable prettier/prettier */
 import React from 'react'
+import { matchesSearch } from '../../utils/settingsSearch'
 
 interface ToggleProps {
   label: string
@@ -7,9 +8,23 @@ interface ToggleProps {
   checked: boolean
   onChange: (checked: boolean) => void
   disabled?: boolean
+  searchQuery?: string
+  searchKeywords?: string[]
 }
 
-export default function Toggle({ label, description, checked, onChange, disabled = false }: ToggleProps): React.ReactElement {
+export default function Toggle({
+  label,
+  description,
+  checked,
+  onChange,
+  disabled = false,
+  searchQuery,
+  searchKeywords
+}: ToggleProps): React.ReactElement | null {
+  if (!matchesSearch(searchQuery ?? '', [label, description, ...(searchKeywords ?? [])])) {
+    return null
+  }
+
   return (
     <div className="flex items-start justify-between py-3">
       <div className="flex-1 pr-4">
