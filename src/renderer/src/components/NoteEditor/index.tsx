@@ -353,17 +353,14 @@ export default function NoteEditor({
       <div className="flex-1 overflow-y-auto scrollbar-hide relative">
         {settings.editor.behavior.view === 'editor-only' && (
           <div
-            className="w-full h-full p-0"
+            className="w-full h-full"
             style={{
               fontFamily:
                 settings.editor.appearance.fontFamily === 'custom'
                   ? `'${settings.editor.appearance.customFontFamily}', ui-monospace, monospace`
                   : "'JetBrains Mono', ui-monospace, monospace",
               fontSize: `${settings.editor.appearance.fontSize}px`,
-              lineHeight: settings.editor.appearance.lineHeight,
-              maxWidth: settings.editor.appearance.maxTextWidth ? '800px' : '100%',
-              margin: settings.editor.appearance.maxTextWidth ? '0 auto' : '0',
-              padding: settings.editor.appearance.maxTextWidth ? '0 2rem' : '0'
+              lineHeight: settings.editor.appearance.lineHeight
             }}
           >
             <MarkdownEditor
@@ -379,7 +376,7 @@ export default function NoteEditor({
         )}
 
         {settings.editor.behavior.view === 'preview-only' && (
-          <div className="w-full h-full max-w-3xl mx-auto">
+          <div className="w-full h-full">
             <MarkdownEditor
               content={editedContent}
               variant="preview"
@@ -416,7 +413,7 @@ export default function NoteEditor({
                 onKeyDown={handleKeyDown}
               />
             </div>
-            <div className="flex-1 min-w-0 max-w-3xl mx-auto border-l border-ink-800 pl-6">
+            <div className="flex-1 min-w-0 border-l border-ink-800 pl-6">
               <NoteContentRenderer content={editedContent} />
             </div>
           </div>

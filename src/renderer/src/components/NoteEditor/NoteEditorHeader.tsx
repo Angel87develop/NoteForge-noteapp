@@ -3,7 +3,6 @@ import React from 'react'
 import { Note, Notebook } from '../../types/note'
 import NoteEditorTitle from './NoteEditorTitle'
 import NoteMetadata from './NoteMetadata'
-import FormattingToolbar from './FormattingToolbar'
 
 interface NoteEditorHeaderProps {
   note: Note
@@ -45,14 +44,22 @@ export default function NoteEditorHeader({
   return (
     <div className="px-6 py-5 border-b border-ink-700 bg-ink-900/50 backdrop-blur-sm">
       {/* Title */}
-      <div className="mb-3">
-        <NoteEditorTitle
-          title={note.title}
-          isEditing={isEditingTitle}
-          onStartEdit={onTitleEditStart}
-          onSave={onTitleSave}
-          onCancel={onTitleCancel}
-        />
+      <div className="mb-3 flex items-start justify-between gap-4">
+        <div className="min-w-0 flex-1">
+          <NoteEditorTitle
+            title={note.title}
+            isEditing={isEditingTitle}
+            onStartEdit={onTitleEditStart}
+            onSave={onTitleSave}
+            onCancel={onTitleCancel}
+          />
+        </div>
+
+        <div className="flex items-center gap-3 text-xs text-text-muted shrink-0">
+          <span>{wordCount} words</span>
+          <span className="text-ink-600">•</span>
+          <span>{charCount} chars</span>
+        </div>
       </div>
 
       {/* Metadata Line */}
@@ -68,9 +75,6 @@ export default function NoteEditorHeader({
         onRemoveTag={onRemoveTag}
         onAddTagClick={onAddTagClick}
       />
-
-      {/* Formatting Toolbar */}
-      <FormattingToolbar wordCount={wordCount} charCount={charCount} />
     </div>
   )
 }

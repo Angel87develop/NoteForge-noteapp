@@ -3,7 +3,14 @@ import { app, shell, BrowserWindow, ipcMain } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
-import { getNoteForgeNotesPath, ensureNoteForgeNotesFolder, createNotebookFolder, loadNotebooksFromFilesystem, loadNotesFromFilesystem, createWelcomeNoteIfNewUser } from './fileManager'
+import {
+  getNoteForgeNotesPath,
+  ensureNoteForgeNotesFolder,
+  createNotebookFolder,
+  loadNotebooksFromFilesystem,
+  loadNotesFromFilesystem,
+  createWelcomeNoteIfNewUser
+} from './fileManager'
 import { saveMarkdown, deleteMarkdown, deleteNotebookFolderSafe } from './mdStorage'
 
 function createWindow(): void {
@@ -56,25 +63,31 @@ app.whenReady().then(() => {
   ipcMain.on('ping', () => console.log('pong'))
 
   // IPC handlers para manejo de archivos
-  ipcMain.handle('save-note-to-file', async (_event, noteId: string, title: string, content: string, notebookId?: string) => {
-    try {
-      const filePath = saveMarkdown(noteId, title, content, notebookId)
-      return { success: true, filePath }
-    } catch (error) {
-      console.error('Error al guardar nota:', error)
-      return { success: false, error: error instanceof Error ? error.message : 'Unknown error' }
+  ipcMain.handle(
+    'save-note-to-file',
+    async (_event, noteId: string, title: string, content: string, notebookId?: string) => {
+      try {
+        const filePath = saveMarkdown(noteId, title, content, notebookId)
+        return { success: true, filePath }
+      } catch (error) {
+        console.error('Error al guardar la nota:', error)
+        return { success: false, error: error instanceof Error ? error.message : 'Unknown error' }
+      }
     }
-  })
+  )
 
-  ipcMain.handle('delete-note-file', async (_event, noteId: string, title: string, notebookId?: string) => {
-    try {
-      const deleted = deleteMarkdown(noteId, title, notebookId)
-      return { success: deleted }
-    } catch (error) {
-      console.error('Error al eliminar nota:', error)
-      return { success: false, error: error instanceof Error ? error.message : 'Unknown error' }
+  ipcMain.handle(
+    'delete-note-file',
+    async (_event, noteId: string, title: string, notebookId?: string) => {
+      try {
+        const deleted = deleteMarkdown(noteId, title, notebookId)
+        return { success: deleted }
+      } catch (error) {
+        console.error('Error al eliminar nota:', error)
+        return { success: false, error: error instanceof Error ? error.message : 'Unknown error' }
+      }
     }
-  })
+  )
 
   ipcMain.handle('get-noteforge-notes-path', async () => {
     try {
@@ -84,7 +97,7 @@ app.whenReady().then(() => {
       return { success: false, error: error instanceof Error ? error.message : 'Unknown error' }
     }
   })
-  
+
   ipcMain.handle('delete-notebook-folder', async (_event, notebookId: string) => {
     try {
       const deleted = deleteNotebookFolderSafe(notebookId)
@@ -95,15 +108,18 @@ app.whenReady().then(() => {
     }
   })
 
-  ipcMain.handle('create-notebook-folder', async (_event, notebookId: string, notebookName: string) => {
-    try {
-      const folderPath = createNotebookFolder(notebookId, notebookName)
-      return { success: true, folderPath }
-    } catch (error) {
-      console.error('Error al crear carpeta de notebook:', error)
-      return { success: false, error: error instanceof Error ? error.message : 'Unknown error' }
+  ipcMain.handle(
+    'create-notebook-folder',
+    async (_event, notebookId: string, notebookName: string) => {
+      try {
+        const folderPath = createNotebookFolder(notebookId, notebookName)
+        return { success: true, folderPath }
+      } catch (error) {
+        console.error('Error al crear carpeta de notebook:', error)
+        return { success: false, error: error instanceof Error ? error.message : 'Unknown error' }
+      }
     }
-  })
+  )
 
   ipcMain.handle('load-notebooks', async () => {
     try {
@@ -111,7 +127,11 @@ app.whenReady().then(() => {
       return { success: true, notebooks }
     } catch (error) {
       console.error('Error al cargar notebooks:', error)
-      return { success: false, error: error instanceof Error ? error.message : 'Unknown error', notebooks: [] }
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        notebooks: []
+      }
     }
   })
 
@@ -121,7 +141,11 @@ app.whenReady().then(() => {
       return { success: true, notes }
     } catch (error) {
       console.error('Error al cargar notas:', error)
-      return { success: false, error: error instanceof Error ? error.message : 'Unknown error', notes: [] }
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        notes: []
+      }
     }
   })
 
@@ -159,4 +183,3 @@ app.on('window-all-closed', () => {
     app.quit()
   }
 })
-
