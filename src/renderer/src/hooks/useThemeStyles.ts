@@ -1,7 +1,26 @@
 /* eslint-disable prettier/prettier */
 import { useEffect } from 'react'
 import { useSettings } from '../contexts/SettingsContext'
-import { darkTheme, lightTheme, sidebarDarkTheme } from '../themes'
+import {
+  darkTheme,
+  lightTheme,
+  sidebarDarkTheme,
+  synthwave84Theme,
+  tokyoNightTheme,
+  tokyoNightStormTheme,
+  tokyoNightMoonTheme,
+  nightOwlTheme,
+  oneDarkProTheme,
+  draculaTheme,
+  nordTheme,
+  githubDarkTheme,
+  githubLightTheme,
+  catppuccinMochaTheme,
+  ayuDarkTheme,
+  monokaiProTheme,
+  solarizedDarkTheme,
+  solarizedLightTheme
+} from '../themes'
 
 export function useThemeStyles(): void {
   const { settings } = useSettings()
@@ -11,22 +30,35 @@ export function useThemeStyles(): void {
     const isLight = settings.ui.theme.theme === 'light' || 
                     (settings.ui.theme.theme === 'system' && window.matchMedia('(prefers-color-scheme: light)').matches)
 
-    // Aplicar tema claro/oscuro usando los temas de la carpeta themes
-    if (isLight) {
-      // Aplicar tema claro
-      Object.entries(lightTheme).forEach(([key, value]) => {
-        root.style.setProperty(key, value)
-      })
-      root.classList.add('theme-light')
-      root.classList.remove('theme-dark')
-    } else {
-      // Aplicar tema oscuro
-      Object.entries(darkTheme).forEach(([key, value]) => {
-        root.style.setProperty(key, value)
-      })
-      root.classList.add('theme-dark')
-      root.classList.remove('theme-light')
+    const themeMap: Record<string, Record<string, string>> = {
+      light: lightTheme,
+      dark: darkTheme,
+      synthwave84: synthwave84Theme,
+      tokyoNight: tokyoNightTheme,
+      tokyoNightStorm: tokyoNightStormTheme,
+      tokyoNightMoon: tokyoNightMoonTheme,
+      nightOwl: nightOwlTheme,
+      oneDarkPro: oneDarkProTheme,
+      dracula: draculaTheme,
+      nord: nordTheme,
+      githubDark: githubDarkTheme,
+      githubLight: githubLightTheme,
+      catppuccinMocha: catppuccinMochaTheme,
+      ayuDark: ayuDarkTheme,
+      monokaiPro: monokaiProTheme,
+      solarizedDark: solarizedDarkTheme,
+      solarizedLight: solarizedLightTheme
     }
+
+    const selectedThemeName = settings.ui.theme.theme
+    const resolvedTheme = themeMap[selectedThemeName] || (isLight ? lightTheme : darkTheme)
+
+    Object.entries(resolvedTheme).forEach(([key, value]) => {
+      root.style.setProperty(key, value)
+    })
+
+    root.classList.toggle('theme-light', isLight && !['synthwave84', 'tokyoNight', 'tokyoNightStorm', 'tokyoNightMoon', 'nightOwl', 'oneDarkPro', 'dracula', 'nord', 'githubDark', 'githubLight', 'catppuccinMocha', 'ayuDark', 'monokaiPro', 'solarizedDark', 'solarizedLight'].includes(selectedThemeName))
+    root.classList.toggle('theme-dark', !isLight || ['synthwave84', 'tokyoNight', 'tokyoNightStorm', 'tokyoNightMoon', 'nightOwl', 'oneDarkPro', 'dracula', 'nord', 'githubDark', 'githubLight', 'catppuccinMocha', 'ayuDark', 'monokaiPro', 'solarizedDark', 'solarizedLight'].includes(selectedThemeName))
 
     // Aplicar border radius
     const borderRadius = settings.ui.theme.borderRadius

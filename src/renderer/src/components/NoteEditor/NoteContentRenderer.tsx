@@ -25,7 +25,21 @@ export default function NoteContentRenderer({ content }: NoteContentRendererProp
   const markdownSettings = settings.editor.markdown
 
   // Detectar el tema actual
-  const isDarkTheme = settings.ui.theme.theme === 'dark' || 
+  const isDarkTheme =
+    settings.ui.theme.theme === 'dark' ||
+    settings.ui.theme.theme === 'synthwave84' ||
+    settings.ui.theme.theme === 'tokyoNight' ||
+    settings.ui.theme.theme === 'tokyoNightStorm' ||
+    settings.ui.theme.theme === 'tokyoNightMoon' ||
+    settings.ui.theme.theme === 'nightOwl' ||
+    settings.ui.theme.theme === 'oneDarkPro' ||
+    settings.ui.theme.theme === 'dracula' ||
+    settings.ui.theme.theme === 'nord' ||
+    settings.ui.theme.theme === 'githubDark' ||
+    settings.ui.theme.theme === 'catppuccinMocha' ||
+    settings.ui.theme.theme === 'ayuDark' ||
+    settings.ui.theme.theme === 'monokaiPro' ||
+    settings.ui.theme.theme === 'solarizedDark' ||
     (settings.ui.theme.theme === 'system' && !window.matchMedia('(prefers-color-scheme: light)').matches)
 
   const remarkPlugins: PluggableList = []

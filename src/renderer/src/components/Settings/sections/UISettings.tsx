@@ -24,7 +24,22 @@ export default function UISettings({ searchQuery = '' }: UISettingsProps): React
           options={[
             { value: 'light', label: 'Light' },
             { value: 'dark', label: 'Dark' },
-            { value: 'system', label: 'System' }
+            { value: 'system', label: 'System' },
+            { value: 'synthwave84', label: 'SynthWave 84' },
+            { value: 'tokyoNight', label: 'Tokyo Night' },
+            { value: 'tokyoNightStorm', label: 'Tokyo Night Storm' },
+            { value: 'tokyoNightMoon', label: 'Tokyo Night Moon' },
+            { value: 'nightOwl', label: 'Night Owl' },
+            { value: 'oneDarkPro', label: 'One Dark Pro' },
+            { value: 'dracula', label: 'Dracula' },
+            { value: 'nord', label: 'Nord' },
+            { value: 'githubDark', label: 'GitHub Dark' },
+            { value: 'githubLight', label: 'GitHub Light' },
+            { value: 'catppuccinMocha', label: 'Catppuccin Mocha' },
+            { value: 'ayuDark', label: 'Ayu Dark' },
+            { value: 'monokaiPro', label: 'Monokai Pro' },
+            { value: 'solarizedDark', label: 'Solarized Dark' },
+            { value: 'solarizedLight', label: 'Solarized Light' }
           ]}
           onChange={(value) => updateUITheme({ theme: value as Theme })}
         />
