@@ -15,9 +15,8 @@ export default function EditorBehavior(): React.ReactElement {
         label="View"
         value={settings.editor.behavior.view}
         options={[
-          { value: 'editor-only', label: 'Editor only' },
-          { value: 'editor-preview', label: 'Editor + live preview' },
-          { value: 'preview-only', label: 'Preview only' }
+          { value: 'markdown', label: 'Markdown' },
+          { value: 'dual', label: 'Dual' }
         ]}
         onChange={(value) => updateEditorBehavior({ view: value as EditorView })}
       />
@@ -26,7 +25,7 @@ export default function EditorBehavior(): React.ReactElement {
         label="Synchronized scroll editor / preview"
         checked={settings.editor.behavior.syncScroll}
         onChange={(checked) => updateEditorBehavior({ syncScroll: checked })}
-        disabled={settings.editor.behavior.view !== 'editor-preview'}
+        disabled={settings.editor.behavior.view !== 'dual'}
       />
       
       <Toggle

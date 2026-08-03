@@ -172,24 +172,7 @@ export default function NoteEditor({
   useEffect(() => {
     const handleTogglePreview = (): void => {
       const currentView = settings.editor.behavior.view
-
-      let nextView: typeof currentView
-      switch (currentView) {
-        case 'editor-only':
-          // Mostrar editor + preview cuando actualmente solo se ve el editor
-          nextView = 'editor-preview'
-          break
-        case 'preview-only':
-          // Volver a editor + preview cuando solo se ve la preview
-          nextView = 'editor-preview'
-          break
-        case 'editor-preview':
-        default:
-          // Si ya estamos en editor + preview, volver a solo editor
-          nextView = 'editor-only'
-          break
-      }
-
+      const nextView: typeof currentView = currentView === 'dual' ? 'markdown' : 'dual'
       updateEditorBehavior({ view: nextView })
     }
 
@@ -351,9 +334,9 @@ export default function NoteEditor({
 
       {/* Content Area */}
       <div className="flex-1 overflow-y-auto scrollbar-hide relative">
-        {settings.editor.behavior.view === 'editor-only' && (
+        {settings.editor.behavior.view === 'markdown' && (
           <div
-            className="w-full h-full"
+            className="w-full h-full min-h-0"
             style={{
               fontFamily:
                 settings.editor.appearance.fontFamily === 'custom'
@@ -375,25 +358,10 @@ export default function NoteEditor({
           </div>
         )}
 
-        {settings.editor.behavior.view === 'preview-only' && (
-          <div className="w-full h-full">
-            <MarkdownEditor
-              content={editedContent}
-              variant="preview"
-              onContentChange={setEditedContent}
-              onSave={() => {
-                if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current)
-                handleSave()
-              }}
-              onKeyDown={handleKeyDown}
-            />
-          </div>
-        )}
-
-        {settings.editor.behavior.view === 'editor-preview' && (
-          <div className="flex h-full px-6 pt-4 pb-6 gap-6">
+        {settings.editor.behavior.view === 'dual' && (
+          <div className="flex h-full min-h-0 px-6 pt-4 pb-6 gap-6">
             <div
-              className="flex-1 min-w-0"
+              className="flex-1 min-w-0 min-h-0"
               style={{
                 fontFamily:
                   settings.editor.appearance.fontFamily === 'custom'
@@ -413,7 +381,7 @@ export default function NoteEditor({
                 onKeyDown={handleKeyDown}
               />
             </div>
-            <div className="flex-1 min-w-0 border-l border-ink-800 pl-6">
+            <div className="flex-1 min-w-0 min-h-0 border-l border-ink-800 pl-6">
               <NoteContentRenderer content={editedContent} />
             </div>
           </div>
@@ -429,27 +397,22 @@ export default function NoteEditor({
           const currentView = settings.editor.behavior.view
           let nextView: typeof currentView
 
-          // Ciclo sencillo: editor-only -> editor-preview -> preview-only -> editor-only
-          if (currentView === 'editor-only') {
-            nextView = 'editor-preview'
-          } else if (currentView === 'editor-preview') {
-            nextView = 'preview-only'
+          if (currentView === 'dual') {
+            nextView = 'markdown'
           } else {
-            nextView = 'editor-only'
+            nextView = 'dual'
           }
 
           updateEditorBehavior({ view: nextView })
         }}
         className="fixed bottom-6 right-6 w-12 h-12 rounded-xl bg-ink-700 hover:bg-ink-600 border border-ink-600 flex items-center justify-center text-text-muted hover:text-amber transition-all shadow-lg hover:shadow-glow z-50 group"
         title={
-          settings.editor.behavior.view === 'editor-only'
-            ? 'Editor + live preview'
-            : settings.editor.behavior.view === 'editor-preview'
-              ? 'Preview only'
-              : 'Editor only'
+          settings.editor.behavior.view === 'dual'
+            ? 'Switch to markdown view'
+            : 'Switch to dual view'
         }
       >
-        {settings.editor.behavior.view === 'preview-only' ? (
+        {settings.editor.behavior.view === 'markdown' ? (
           // Icono de modo edición
           <svg
             width="20"

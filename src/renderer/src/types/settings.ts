@@ -19,7 +19,7 @@ export type Theme =
   | 'solarizedDark'
   | 'solarizedLight'
 export type MarkdownDialect = 'commonmark' | 'gfm'
-export type EditorView = 'editor-only' | 'editor-preview' | 'preview-only'
+export type EditorView = 'markdown' | 'dual'
 export type UIDensity = 'compact' | 'normal' | 'comfortable'
 export type IconSet = 'minimal' | 'outline' | 'filled'
 export type KeyboardProfile = 'default'
@@ -141,7 +141,7 @@ export const defaultSettings: Settings = {
       highlightActiveLine: true
     },
     behavior: {
-      view: 'editor-only',
+      view: 'markdown',
       syncScroll: true,
       autoSave: true,
       autoSaveInterval: 3,

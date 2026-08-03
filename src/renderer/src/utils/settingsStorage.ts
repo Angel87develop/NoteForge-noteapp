@@ -43,6 +43,12 @@ export const loadSettings = (): Settings => {
         }
       })
       
+      const storedView = parsed.editor?.behavior?.view
+      const normalizedView: Settings['editor']['behavior']['view'] =
+        storedView === 'dual' || storedView === 'editor-preview'
+          ? 'dual'
+          : 'markdown'
+
       // Merge con defaults para asegurar que todas las propiedades existan
       return {
         ...defaultSettings,
@@ -56,7 +62,8 @@ export const loadSettings = (): Settings => {
           },
           behavior: {
             ...defaultSettings.editor.behavior,
-            ...parsed.editor?.behavior
+            ...parsed.editor?.behavior,
+            view: normalizedView
           },
           markdown: {
             ...defaultSettings.editor.markdown,

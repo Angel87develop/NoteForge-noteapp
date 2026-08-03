@@ -252,6 +252,7 @@ export default function MarkdownEditor({
 }: MarkdownEditorProps) {
   const editorRef = useRef<HTMLDivElement>(null)
   const isUpdatingRef = useRef(false)
+  const isComposingRef = useRef(false)
   const lastContentRef = useRef(content)
 
   // Guardar posición del cursor contando caracteres incluyendo saltos de línea
@@ -421,29 +422,21 @@ export default function MarkdownEditor({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Manejar cambios en el contenido
-  const handleInput = useCallback(() => {
+  const syncContentFromEditor = useCallback((preserveCaret = true) => {
     if (!editorRef.current) return
     isUpdatingRef.current = true
 
-    // Guardar la posición del cursor antes de extraer el contenido
-    const caretPos = saveCaretPosition()
-
-    // Extraer el texto plano según el DOM actual (antes de re-renderizar)
+    const caretPos = preserveCaret ? saveCaretPosition() : null
     const newContent = extractTextFromHtml(editorRef.current)
     lastContentRef.current = newContent
     onContentChange(newContent)
 
-    // Re-renderizar con estilos después de un pequeño delay
     requestAnimationFrame(() => {
       const editor = editorRef.current
       if (!editor) return
 
-      // Actualizar el HTML estilizado
       editor.innerHTML = renderContentWithStyles(newContent, variant)
 
-      // Restaurar la posición del cursor
-      // Si no se pudo guardar la posición, intentar calcularla basándose en el cambio de contenido
       if (caretPos !== null) {
         restoreCaretPosition(caretPos)
       } else {
@@ -453,6 +446,27 @@ export default function MarkdownEditor({
       isUpdatingRef.current = false
     })
   }, [onContentChange, variant, saveCaretPosition, restoreCaretPosition])
+
+  // Manejar cambios en el contenido
+  const handleInput = useCallback((e?: React.FormEvent<HTMLDivElement>) => {
+    if (!editorRef.current) return
+
+    const nativeEvent = e?.nativeEvent as Event & { isComposing?: boolean } | undefined
+    if (nativeEvent?.isComposing || isComposingRef.current) {
+      return
+    }
+
+    syncContentFromEditor(true)
+  }, [syncContentFromEditor])
+
+  const handleCompositionStart = useCallback(() => {
+    isComposingRef.current = true
+  }, [])
+
+  const handleCompositionEnd = useCallback(() => {
+    isComposingRef.current = false
+    syncContentFromEditor(true)
+  }, [syncContentFromEditor])
 
   // Manejar teclas especiales
   const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
@@ -563,6 +577,8 @@ export default function MarkdownEditor({
         contentEditable
         suppressContentEditableWarning
         onInput={handleInput}
+        onCompositionStart={handleCompositionStart}
+        onCompositionEnd={handleCompositionEnd}
         onKeyDown={handleKeyDown}
         onPaste={handlePaste}
         onBlur={onSave}
