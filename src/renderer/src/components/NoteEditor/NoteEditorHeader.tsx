@@ -42,7 +42,7 @@ export default function NoteEditorHeader({
   onAddTagClick
 }: NoteEditorHeaderProps) {
   return (
-    <div className="px-6 py-5 border-b border-ink-700 bg-ink-900/50 backdrop-blur-sm">
+    <div className="relative z-20 px-6 py-5 border-b border-ink-700 bg-ink-900/50 backdrop-blur-sm">
       {/* Title */}
       <div className="mb-3 flex items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
