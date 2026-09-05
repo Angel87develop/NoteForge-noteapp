@@ -2,6 +2,7 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 import React, { useRef, useEffect, useCallback } from 'react'
 import { sanitizeContent } from '../../utils/markdownUtils'
+import { highlightCode } from '../../utils/markdown/codeHighlight'
 import './markdownEditor.css'
 
 type MarkdownEditorVariant = 'source' | 'preview'
@@ -28,6 +29,12 @@ const processInlineFormatting = (line: string, preview: boolean): string => {
 
   let processedLine = escapeHtml(line)
 
+  // Matemáticas inline: $...$ (no $$ ... $$ que es block)
+  processedLine = processedLine.replace(/(?<!\$)\$(?!\$)((?:[^$\\]|\\.)+?)\$(?!\$)/g, (_match, inner) => {
+    const escaped = inner.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#039;/g, "'")
+    return `<span class="md-math-inline">${hidden('$', preview)}${escapeHtml(escaped)}${hidden('$', preview)}</span>`
+  })
+
   processedLine = processedLine.replace(/`([^`]+)`/g, (_match, inner) =>
     preview
       ? `<span class="md-code">${hidden('`', preview)}${inner}${hidden('`', preview)}</span>`
@@ -49,6 +56,29 @@ const processInlineFormatting = (line: string, preview: boolean): string => {
   return processedLine
 }
 
+// Renderizar HTML embebido: escapar pero estilizar las etiquetas para distinguirlas
+const renderEmbeddedHtml = (line: string): string | null => {
+  const escapeHtml = (str: string) =>
+    str
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;')
+
+  // Detectar si la línea es principalmente HTML (empieza con <tag o </tag)
+  if (!/^\s*<\w+[\s/>]/.test(line) && !/^\s*<\/\w+>/.test(line)) {
+    return null
+  }
+
+  // Resaltar nombres de etiquetas y atributos
+  const escaped = escapeHtml(line)
+  const styled = escaped
+    .replace(/(&lt;\/?)([\w-]+)/g, '$1<span class="md-html-tagname">$2</span>')
+    .replace(/([\w-]+)(=)(&quot;.*?&quot;)/g, '<span class="md-html-attr">$1</span>$2<span class="md-html-attrval">$3</span>')
+  return `<div class="md-line md-html-line">${styled}</div>`
+}
+
 // Función para renderizar el contenido con estilos inline
 const renderContentWithStyles = (text: string, variant: MarkdownEditorVariant = 'source'): string => {
   const preview = variant === 'preview'
@@ -56,6 +86,13 @@ const renderContentWithStyles = (text: string, variant: MarkdownEditorVariant = 
 
   const lines = text.split('\n')
   const htmlLines: string[] = []
+  let inCodeBlock = false
+  let codeBlockLanguage = ''
+  let inMathBlock = false
+
+  const codeFenceRegex = /^```\s*([\w-]*)$/
+  const mathBlockOpenRegex = /^\$\$\s*$/
+  const mathBlockInlineRegex = /^\$\$(.+)\$\$$/
 
   const escapeHtml = (str: string) => {
     return str
@@ -66,11 +103,88 @@ const renderContentWithStyles = (text: string, variant: MarkdownEditorVariant = 
       .replace(/'/g, '&#039;')
   }
 
-  lines.forEach((line) => {
+  for (const line of lines) {
+    // Bloque de matemáticas $$ ... $$ (block)
+    if (!inCodeBlock) {
+      // $$ contenido $$ en una sola línea
+      const inlineMathBlock = line.match(mathBlockInlineRegex)
+      if (inlineMathBlock) {
+        const mathContent = inlineMathBlock[1]
+        htmlLines.push(
+          `<div class="md-line md-math-block">${hidden('$$', preview)}${escapeHtml(mathContent)}${hidden('$$', preview)}</div>`
+        )
+        continue
+      }
+      // Apertura de bloque $$ ... $$ multilínea
+      if (mathBlockOpenRegex.test(line)) {
+        if (inMathBlock) {
+          inMathBlock = false
+          htmlLines.push('<div class="md-line md-math-block">' + hidden('$$', preview) + '</div>')
+        } else {
+          inMathBlock = true
+          htmlLines.push('<div class="md-line md-math-block">' + hidden('$$', preview) + '</div>')
+        }
+        continue
+      }
+      if (inMathBlock) {
+        htmlLines.push(`<div class="md-line md-math-block-content">${escapeHtml(line)}</div>`)
+        continue
+      }
+    }
+
+    // Detectar fences de code block (```)
+    const fenceMatch = line.match(codeFenceRegex)
+    if (fenceMatch) {
+      if (inCodeBlock) {
+        // Cerrar code block
+        inCodeBlock = false
+        codeBlockLanguage = ''
+        if (preview) {
+          htmlLines.push('<div class="md-line md-code-fence">' + hidden('```', preview) + '</div>')
+        } else {
+          htmlLines.push('<div class="md-line md-code-fence"><span class="md-code-fence-marker">```</span></div>')
+        }
+      } else {
+        // Abrir code block y capturar lenguaje
+        inCodeBlock = true
+        codeBlockLanguage = fenceMatch[1] || ''
+        if (preview) {
+          const fenceText = '```' + (codeBlockLanguage ? ' ' + codeBlockLanguage : '')
+          htmlLines.push('<div class="md-line md-code-fence">' + hidden(fenceText, preview) + '</div>')
+        } else {
+          const langInline = codeBlockLanguage
+            ? `<span class="md-code-lang-inline">${escapeHtml(codeBlockLanguage)}</span>`
+            : ''
+          htmlLines.push('<div class="md-line md-code-fence"><span class="md-code-fence-marker">```</span>' + langInline + '</div>')
+        }
+      }
+      continue
+    }
+
+    // Línea dentro de un code block: resaltar sintaxis
+    if (inCodeBlock) {
+      if (line === '') {
+        htmlLines.push('<div class="md-line md-code-line"><br></div>')
+      } else {
+        const highlighted = codeBlockLanguage
+          ? highlightCode(line, codeBlockLanguage)
+          : escapeHtml(line);
+        htmlLines.push(`<div class="md-line md-code-line">${highlighted}</div>`)
+      }
+      continue
+    }
+
     // Línea vacía
     if (line === '') {
       htmlLines.push('<div class="md-line md-empty"><br></div>')
-      return
+      continue
+    }
+
+    // Detectar HTML embebido (línea que comienza con <tag)
+    const htmlLine = renderEmbeddedHtml(line)
+    if (htmlLine) {
+      htmlLines.push(htmlLine)
+      continue
     }
 
     // Detectar títulos (h1-h6)
@@ -80,15 +194,11 @@ const renderContentWithStyles = (text: string, variant: MarkdownEditorVariant = 
       const headingContent = headingMatch[2]
       const prefix = `${headingMatch[1]} `
       if (preview) {
-        htmlLines.push(
-          `<div class="md-line md-h${level}">${hidden(prefix, preview)}${processInlineFormatting(headingContent, preview)}</div>`
-        )
+        htmlLines.push('<div class="md-line md-h' + level + '">' + hidden(prefix, preview) + processInlineFormatting(headingContent, preview) + '</div>')
       } else {
-        htmlLines.push(
-          `<div class="md-line md-h${level}"><span class="md-hash">${headingMatch[1]}</span> ${escapeHtml(headingContent)}</div>`
-        )
+        htmlLines.push('<div class="md-line md-h' + level + '"><span class="md-hash">' + headingMatch[1] + '</span> ' + escapeHtml(headingContent) + '</div>')
       }
-      return
+      continue
     }
 
     // Detectar listas no ordenadas
@@ -106,7 +216,7 @@ const renderContentWithStyles = (text: string, variant: MarkdownEditorVariant = 
           `<div class="md-line md-list">${escapeHtml(indent)}<span class="md-marker">${marker}</span> ${escapeHtml(listContent)}</div>`
         )
       }
-      return
+      continue
     }
 
     // Detectar listas ordenadas
@@ -124,7 +234,7 @@ const renderContentWithStyles = (text: string, variant: MarkdownEditorVariant = 
           `<div class="md-line md-list">${escapeHtml(indent)}<span class="md-marker">${marker}</span> ${escapeHtml(listContent)}</div>`
         )
       }
-      return
+      continue
     }
 
     // Detectar blockquotes
@@ -140,12 +250,12 @@ const renderContentWithStyles = (text: string, variant: MarkdownEditorVariant = 
           `<div class="md-line md-blockquote"><span class="md-quote-marker">&gt;</span> ${escapeHtml(quoteContent)}</div>`
         )
       }
-      return
+      continue
     }
 
     // Línea normal
-    htmlLines.push(`<div class="md-line">${processInlineFormatting(line, preview)}</div>`)
-  })
+    htmlLines.push('<div class="md-line">' + processInlineFormatting(line, preview) + '</div>')
+  }
 
   return htmlLines.join('')
 }

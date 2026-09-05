@@ -47,7 +47,9 @@ KaTeX support allows rendering mathematical notation directly inside your notes.
 ## Markdown Editor
 
 - Live preview with synchronized scrolling
-- Multiple editor layouts
+- Source and preview editor variants that hide or show Markdown syntax
+- Custom code syntax highlighting with a built-in highlighter
+- Inline math highlighting for `$...$` expressions
 - Syntax highlighting
 - Line numbers
 - Active line highlighting
@@ -69,16 +71,16 @@ KaTeX support allows rendering mathematical notation directly inside your notes.
 
 ## Markdown Support
 
-Supports both CommonMark and GitHub Flavored Markdown.
+Supports both CommonMark and GitHub Flavored Markdown, selectable from the settings.
 
 Available extensions include:
 
 - Tables
 - Task Lists
 - Footnotes
-- KaTeX / LaTeX
-- Mermaid diagrams
-- Embedded HTML
+- KaTeX / LaTeX math rendering
+- Embedded HTML rendering (toggleable)
+- Code blocks with syntax highlighting
 
 ---
 
@@ -88,29 +90,57 @@ Configure nearly every aspect of the editor.
 
 ### Editor
 
-- Fonts
+- Fonts, including a custom font option
 - Font size
 - Line height
 - Maximum text width
-- View modes
-- Auto-save
+- View modes (Markdown and Dual)
+- Auto-save with configurable interval
 - Session restoration
+- Confirm on close
 
 ### Interface
 
 - Light theme
 - Dark theme
 - System theme
-- Blur effects (Windows)
+- Sixteen additional themes inspired by popular color schemes:
+  - SynthWave 84
+  - Tokyo Night
+  - Tokyo Night Storm
+  - Tokyo Night Moon
+  - Night Owl
+  - One Dark Pro
+  - Dracula
+  - Nord
+  - GitHub Dark
+  - GitHub Light
+  - Catppuccin Mocha
+  - Ayu Dark
+  - Monokai Pro
+  - Solarized Dark
+  - Solarized Light
+- Acrylic blur effect (Windows 11)
 - Adjustable border radius
-- Interface density
-- Animation controls
+- Interface density (compact, normal, comfortable)
+- Animation controls with adjustable speed
+- Selectable icon sets (minimal, outline, filled)
 
 ### Keyboard Shortcuts
 
-- Fully customizable shortcuts
+- Fully customizable shortcuts with live key recording
 - Default profile
 - Import / Export configurations
+
+---
+
+## Settings
+
+- Settings panel organized into grouped sections
+- Built-in search to quickly find any option
+- Reset all settings to defaults
+- Open the data folder directly from the About section
+- Report a bug from the About section
 
 ---
 
@@ -186,6 +216,8 @@ NoteForge
 │   └── renderer
 │       ├── components
 │       ├── contexts
+│       ├── hooks
+│       ├── themes
 │       ├── types
 │       └── utils
 │
@@ -203,9 +235,11 @@ NoteForge
 | Electron | Desktop application |
 | React | User Interface |
 | TypeScript | Static typing |
-| Tailwind CSS | Styling |
+| Tailwind CSS 4.1 | Styling |
 | React Markdown | Markdown rendering |
 | Remark GFM | GitHub Flavored Markdown |
+| Remark Math + Rehype KaTeX | Mathematical notation |
+| Rehype Raw | Embedded HTML rendering |
 | Electron Vite | Development tooling |
 | Electron Builder | Application packaging |
 
@@ -213,21 +247,21 @@ NoteForge
 
 # Local Storage
 
-Notes are stored locally inside the user's **Documents** folder.
+Notes are stored locally inside the user's application data folder.
 
 ```
 Windows
-%USERPROFILE%/Documents/noteforge-notes
+%LOCALAPPDATA%/noteforge-notes
 ```
 
 ```
 macOS
-~/Documents/noteforge-notes
+~/Library/Application Support/noteforge-notes
 ```
 
 ```
 Linux
-~/Documents/noteforge-notes
+~/.local/share/noteforge-notes
 ```
 
 Each note is saved as an individual Markdown file.
@@ -235,6 +269,8 @@ Each note is saved as an individual Markdown file.
 ```
 Title_NoteID.md
 ```
+
+You can also open this folder directly from the About section in Settings.
 
 ---
 
@@ -321,4 +357,3 @@ See the **LICENSE** file for more information.
 Bug reports, feature requests and questions can be submitted through the GitHub Issues page.
 
 https://github.com/Angel87develop/NoteForge/issues
-

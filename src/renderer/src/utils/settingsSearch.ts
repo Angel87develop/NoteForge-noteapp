@@ -11,7 +11,7 @@ export const sectionSearchKeywords: Record<SettingsSectionId, string[]> = {
   editor: [
     'editor', 'markdown', 'appearance', 'behavior', 'font', 'size', 'family',
     'line height', 'wrap', 'auto-save', 'preview', 'view', 'tables', 'task lists',
-    'footnotes', 'math', 'katex', 'mermaid', 'diagrams', 'html', 'commonmark', 'gfm',
+    'footnotes', 'math', 'katex', 'html', 'commonmark', 'gfm',
     'line numbers', 'session', 'dialect', 'maximum text width', 'word wrap',
     'highlight active line', 'custom font', 'synchronized scroll', 'confirm', 'restore'
   ],

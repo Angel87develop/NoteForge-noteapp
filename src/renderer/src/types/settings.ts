@@ -76,7 +76,6 @@ export interface MarkdownSettings {
   taskLists: boolean
   footnotes: boolean
   mathSupport: boolean
-  diagrams: boolean // Mermaid
   htmlEmbedded: boolean
 }
 
@@ -153,9 +152,8 @@ export const defaultSettings: Settings = {
       tables: true,
       taskLists: true,
       footnotes: true,
-      mathSupport: false,
-      diagrams: false,
-      htmlEmbedded: false
+      mathSupport: true,
+      htmlEmbedded: true
     }
   },
   keyboard: {

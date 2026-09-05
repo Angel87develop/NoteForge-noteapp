@@ -210,13 +210,6 @@ export default function EditorSettings({ searchQuery = '' }: EditorSettingsProps
 
         <Toggle
           searchQuery={searchQuery}
-          label="Diagrams (Mermaid)"
-          checked={settings.editor.markdown.diagrams}
-          onChange={(checked) => updateMarkdownSettings({ diagrams: checked })}
-        />
-
-        <Toggle
-          searchQuery={searchQuery}
           label="Embedded HTML rendering"
           checked={settings.editor.markdown.htmlEmbedded}
           onChange={(checked) => updateMarkdownSettings({ htmlEmbedded: checked })}

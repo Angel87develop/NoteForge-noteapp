@@ -1,6 +1,8 @@
 /* eslint-disable prettier/prettier */
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 
+import { highlightCode, getDisplayLanguageName } from './markdown/codeHighlight'
+
 // Función para sanitizar contenido: eliminar caracteres invisibles y normalizar
 export const sanitizeContent = (text: string): string => {
   if (!text) return ''
@@ -181,6 +183,7 @@ export const renderMarkdownWithColorsHTML = (text: string): string => {
   const htmlLines: string[] = []
   let inCodeBlock = false
   let codeBlockLines: string[] = []
+  let codeBlockLanguage = ''
 
   const escapeHtml = (str: string) => {
     return str
@@ -193,19 +196,26 @@ export const renderMarkdownWithColorsHTML = (text: string): string => {
 
   lines.forEach((line) => {
     // Detectar inicio/fin de code blocks (```)
-    const codeBlockMatch = line.match(/^```(\w*)$/)
+    const codeBlockMatch = line.match(/^```([\w-]*)$/)
     if (codeBlockMatch) {
       if (inCodeBlock) {
-        // Cerrar code block
+        // Cerrar code block: aplicar resaltado de sintaxis si hay lenguaje
         const codeContent = codeBlockLines.join('\n')
+        const langLabel = codeBlockLanguage ? getDisplayLanguageName(codeBlockLanguage) : ''
+        const langTag = langLabel ? `<span class="md-code-lang">${escapeHtml(langLabel)}</span>` : ''
+        const highlighted = codeBlockLanguage
+          ? highlightCode(codeContent, codeBlockLanguage)
+          : escapeHtml(codeContent)
         htmlLines.push(
-          `<div style="font-size: 0.875rem; line-height: 1.75; margin: 0.5rem 0; padding: 1rem; background-color: #1a1a1a; border-left: 3px solid #a78bfa; border-radius: 0.25rem; color: #e0e0e0; font-family: ui-monospace, monospace; white-space: pre; overflow-x: auto; display: block; box-sizing: border-box;">${escapeHtml(codeContent)}</div>`
+          `<div class="md-code-block">${langTag}${highlighted}</div>`
         )
         inCodeBlock = false
         codeBlockLines = []
+        codeBlockLanguage = ''
       } else {
-        // Abrir code block
+        // Abrir code block y capturar el lenguaje
         inCodeBlock = true
+        codeBlockLanguage = codeBlockMatch[1] || ''
       }
       return
     }
@@ -279,11 +289,16 @@ export const renderMarkdownWithColorsHTML = (text: string): string => {
     htmlLines.push(`<div style="font-size: 0.875rem; line-height: 2.5rem; height: 2.5rem; margin: 0; padding: 0; display: flex; align-items: center; box-sizing: border-box;">${processedLine}</div>`)
   })
 
-  // Si el code block no se cerró, renderizarlo
+  // Si el code block no se cerró, renderizarlo (con resaltado si hay lenguaje)
   if (inCodeBlock && codeBlockLines.length > 0) {
     const codeContent = codeBlockLines.join('\n')
+    const langLabel = codeBlockLanguage ? getDisplayLanguageName(codeBlockLanguage) : ''
+    const langTag = langLabel ? `<span class="md-code-lang">${escapeHtml(langLabel)}</span>` : ''
+    const highlighted = codeBlockLanguage
+      ? highlightCode(codeContent, codeBlockLanguage)
+      : escapeHtml(codeContent)
     htmlLines.push(
-      `<div style="font-size: 0.875rem; line-height: 1.75; margin: 0.5rem 0; padding: 1rem; background-color: #1a1a1a; border-left: 3px solid #a78bfa; border-radius: 0.25rem; color: #e0e0e0; font-family: ui-monospace, monospace; white-space: pre; overflow-x: auto; display: block; box-sizing: border-box;">${escapeHtml(codeContent)}</div>`
+      `<div class="md-code-block">${langTag}${highlighted}</div>`
     )
   }
 

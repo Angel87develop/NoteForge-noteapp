@@ -45,12 +45,6 @@ export default function MarkdownSettings(): React.ReactElement {
       />
       
       <Toggle
-        label="Diagrams (Mermaid)"
-        checked={settings.editor.markdown.diagrams}
-        onChange={(checked) => updateMarkdownSettings({ diagrams: checked })}
-      />
-      
-      <Toggle
         label="Embedded HTML rendering"
         checked={settings.editor.markdown.htmlEmbedded}
         onChange={(checked) => updateMarkdownSettings({ htmlEmbedded: checked })}

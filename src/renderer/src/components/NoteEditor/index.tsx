@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { Note, Notebook } from '../../types/note'
 import { sanitizeContent } from '../../utils/markdownUtils'
 import { useSettings } from '../../contexts/SettingsContext'
+import { useUndoRedo } from '../../hooks/useUndoRedo'
 import NoteEditorHeader from './NoteEditorHeader'
 import TagsModal from './TagsModal'
 import MarkdownEditor from './MarkdownEditor'
@@ -43,7 +44,16 @@ export default function NoteEditor({
   onTagUpdate
 }: NoteEditorProps) {
   const { settings, updateEditorBehavior } = useSettings()
-  const [editedContent, setEditedContent] = useState(() => note?.content ?? '')
+  const {
+    value: editedContent,
+    set: setEditedContentRaw,
+    reset: resetEditedContent,
+    undo: undoContent,
+    redo: redoContent,
+    flush: flushUndoRedo,
+    canUndo,
+    canRedo
+  } = useUndoRedo<string>('')
   const [editedTitle, setEditedTitle] = useState(() => note?.title ?? '')
   const [isEditingTitle, setIsEditingTitle] = useState(false)
   const [showStatusDropdown, setShowStatusDropdown] = useState(false)
@@ -92,7 +102,7 @@ export default function NoteEditor({
       const isNewNote = note.title === 'Untitled Note' && note.content === ''
       
       requestAnimationFrame(() => {
-        setEditedContent(sanitizedContent)
+        resetEditedContent(sanitizedContent)
         setEditedTitle(note.title)
         // Activar edición del título automáticamente si es una nueva nota
         setIsEditingTitle(isNewNote)
@@ -201,9 +211,26 @@ export default function NoteEditor({
     if (e.key === 'Escape') {
       setIsEditingTitle(false)
       if (note) {
-        setEditedContent(note.content)
+        resetEditedContent(note.content)
         setEditedTitle(note.title)
       }
+    }
+    // Ctrl/Cmd + Z: Undo
+    if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key.toLowerCase() === 'z') {
+      e.preventDefault()
+      flushUndoRedo()
+      undoContent()
+      return
+    }
+    // Ctrl/Cmd + Y or Ctrl/Cmd + Shift + Z: Redo
+    if (
+      ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') ||
+      ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'z')
+    ) {
+      e.preventDefault()
+      flushUndoRedo()
+      redoContent()
+      return
     }
     if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
       if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current)
@@ -348,7 +375,7 @@ export default function NoteEditor({
           >
             <MarkdownEditor
               content={editedContent}
-              onContentChange={setEditedContent}
+              onContentChange={setEditedContentRaw}
               onSave={() => {
                 if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current)
                 handleSave()
@@ -373,7 +400,7 @@ export default function NoteEditor({
             >
               <MarkdownEditor
                 content={editedContent}
-                onContentChange={setEditedContent}
+                onContentChange={setEditedContentRaw}
                 onSave={() => {
                   if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current)
                   handleSave()
@@ -388,60 +415,90 @@ export default function NoteEditor({
         )}
       </div>
 
-      {/* View Mode Toggle (cambia el modo global de vista) */}
-      <button
-        onClick={() => {
-          if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current)
-          handleSave()
+      {/* Undo / Redo / View Mode Toggle */}
+      <div className="fixed bottom-6 right-6 flex items-center gap-2 z-50">
+        <button
+          onClick={() => {
+            flushUndoRedo()
+            undoContent()
+          }}
+          disabled={!canUndo}
+          className="w-12 h-12 rounded-xl bg-ink-700 hover:bg-ink-600 border border-ink-600 flex items-center justify-center text-text-muted hover:text-amber transition-all shadow-lg hover:shadow-glow group disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-ink-700"
+          title="Undo (Ctrl+Z)"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="group-hover:scale-110 transition-transform">
+            <path d="M9 14L4 9l5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M4 9h11a5 5 0 0 1 0 10h-1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
+        <button
+          onClick={() => {
+            flushUndoRedo()
+            redoContent()
+          }}
+          disabled={!canRedo}
+          className="w-12 h-12 rounded-xl bg-ink-700 hover:bg-ink-600 border border-ink-600 flex items-center justify-center text-text-muted hover:text-amber transition-all shadow-lg hover:shadow-glow group disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-ink-700"
+          title="Redo (Ctrl+Y)"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="group-hover:scale-110 transition-transform">
+            <path d="M15 14l5-5-5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M20 9H9a5 5 0 0 0 0 10h1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
+        <button
+          onClick={() => {
+            if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current)
+            handleSave()
 
-          const currentView = settings.editor.behavior.view
-          let nextView: typeof currentView
+            const currentView = settings.editor.behavior.view
+            let nextView: typeof currentView
 
-          if (currentView === 'dual') {
-            nextView = 'markdown'
-          } else {
-            nextView = 'dual'
+            if (currentView === 'dual') {
+              nextView = 'markdown'
+            } else {
+              nextView = 'dual'
+            }
+
+            updateEditorBehavior({ view: nextView })
+          }}
+          className="w-12 h-12 rounded-xl bg-ink-700 hover:bg-ink-600 border border-ink-600 flex items-center justify-center text-text-muted hover:text-amber transition-all shadow-lg hover:shadow-glow group"
+          title={
+            settings.editor.behavior.view === 'dual'
+              ? 'Switch to markdown view'
+              : 'Switch to dual view'
           }
-
-          updateEditorBehavior({ view: nextView })
-        }}
-        className="fixed bottom-6 right-6 w-12 h-12 rounded-xl bg-ink-700 hover:bg-ink-600 border border-ink-600 flex items-center justify-center text-text-muted hover:text-amber transition-all shadow-lg hover:shadow-glow z-50 group"
-        title={
-          settings.editor.behavior.view === 'dual'
-            ? 'Switch to markdown view'
-            : 'Switch to dual view'
-        }
-      >
-        {settings.editor.behavior.view === 'markdown' ? (
-          // Icono de modo edición
-          <svg
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            className="group-hover:scale-110 transition-transform"
-          >
-            <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-            <rect x="4" y="4" width="16" height="16" rx="2" stroke="currentColor" strokeWidth="1.5" />
-          </svg>
-        ) : (
-          // Icono de ojo (modo preview / mixto)
-          <svg
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            className="group-hover:scale-110 transition-transform"
-          >
-            <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.5" />
-            <path
-              d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"
-              stroke="currentColor"
-              strokeWidth="1.5"
-            />
-          </svg>
-        )}
-      </button>
+        >
+          {settings.editor.behavior.view === 'markdown' ? (
+            // Icono de modo edición
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              className="group-hover:scale-110 transition-transform"
+            >
+              <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              <rect x="4" y="4" width="16" height="16" rx="2" stroke="currentColor" strokeWidth="1.5" />
+            </svg>
+          ) : (
+            // Icono de ojo (modo preview / mixto)
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              className="group-hover:scale-110 transition-transform"
+            >
+              <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.5" />
+              <path
+                d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"
+                stroke="currentColor"
+                strokeWidth="1.5"
+              />
+            </svg>
+          )}
+        </button>
+      </div>
     </div>
   )
 }
