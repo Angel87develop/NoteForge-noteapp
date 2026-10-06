@@ -22,7 +22,8 @@
   overflow-y: auto;
   overflow-x: hidden;
   box-sizing: border-box;
-  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-family:
+    'JetBrains Mono', ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
   font-size: 0.9rem;
   line-height: 1.8;
   color: var(--text-primary);
@@ -345,7 +346,11 @@
    ═══════════════════════════════════════════════════════════════════════════ */
 
 .markdown-preview-mode .markdown-preview-editable {
-  font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family:
+    'DM Sans',
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
   font-size: 1rem;
   line-height: 1.75;
 }
@@ -440,4 +445,185 @@
   background: var(--accent-glow);
   border-radius: 0 4px 4px 0;
   margin: 0.5rem 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   LINE NUMBERS
+   Uses CSS counters on .md-line elements with a ::before pseudo-element.
+   The .show-line-numbers class is applied to the contentEditable container.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.markdown-contenteditable.show-line-numbers {
+  counter-reset: md-line-number;
+  padding-left: 4rem;
+}
+
+.markdown-contenteditable.show-line-numbers .md-line {
+  counter-increment: md-line-number;
+  position: relative;
+}
+
+.markdown-contenteditable.show-line-numbers .md-line::before {
+  content: counter(md-line-number);
+  position: absolute;
+  left: -3rem;
+  width: 2rem;
+  text-align: right;
+  color: var(--text-muted);
+  opacity: 0.4;
+  font-variant-numeric: tabular-nums;
+  user-select: none;
+  pointer-events: none;
+  font-size: 0.85em;
+  font-weight: 400;
+  line-height: inherit;
+  transition:
+    color 0.15s ease,
+    opacity 0.15s ease;
+}
+
+/* Line number of the active line is more visible */
+.markdown-contenteditable.show-line-numbers.highlight-active-line .md-line.md-active-line::before {
+  color: var(--accent-primary);
+  opacity: 1;
+  font-weight: 600;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ACTIVE LINE HIGHLIGHT
+   The .highlight-active-line class is applied to the contentEditable container.
+   The .md-active-line class is applied to the current line's .md-line div
+   via JavaScript (selectionchange listener in MarkdownEditor.tsx).
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.markdown-contenteditable.highlight-active-line .md-line.md-active-line {
+  background: var(--accent-glow);
+  border-radius: 4px;
+  box-shadow: inset 3px 0 0 var(--accent-primary);
+  margin-left: -0.5rem;
+  padding-left: 0.5rem;
+  margin-right: -0.5rem;
+  padding-right: 0.5rem;
+  transition: background 0.1s ease;
+}
+
+/* When line numbers are on, don't add negative margin (gutter is on the left) */
+.markdown-contenteditable.show-line-numbers.highlight-active-line .md-line.md-active-line {
+  margin-left: 0;
+  padding-left: 0.5rem;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   WORD WRAP OFF
+   The .no-word-wrap class is applied when word wrap is disabled.
+   Lines will extend horizontally with a scrollbar instead of wrapping.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.markdown-contenteditable.no-word-wrap {
+  white-space: pre;
+  word-wrap: normal;
+  overflow-x: auto;
+  overflow-y: auto;
+}
+
+.markdown-contenteditable.no-word-wrap .md-line {
+  white-space: pre;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   VIM MODE
+   The .vim-active class is applied to the editor container when the Vim
+   keyboard profile is enabled. The container becomes a flex column so the
+   status line sits below the editable content.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.markdown-editor-container.vim-active {
+  display: flex;
+  flex-direction: column;
+}
+
+.markdown-editor-container.vim-active .markdown-contenteditable {
+  height: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+/* Caret color per mode */
+.markdown-contenteditable.vim-mode-normal {
+  caret-color: var(--accent-primary);
+}
+
+.markdown-contenteditable.vim-mode-insert {
+  caret-color: #22c55e;
+}
+
+.markdown-contenteditable.vim-mode-visual {
+  caret-color: #f59e0b;
+}
+
+.markdown-contenteditable.vim-mode-command {
+  caret-color: #eab308;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   VIM STATUS LINE
+   Thin bar under the editor: mode indicator, pending command buffer and
+   transient messages (like "3 lines deleted" or "Saved").
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.vim-statusline {
+  flex-shrink: 0;
+  height: 1.75rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0 0.75rem;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 0.7rem;
+  border-top: 1px solid var(--border-default);
+  background: var(--bg-secondary);
+  color: var(--text-muted);
+  user-select: none;
+}
+
+.vim-statusline-mode {
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  padding: 0 0.5rem;
+  border-radius: 3px;
+  min-width: 6.5rem;
+  text-align: center;
+}
+
+.vim-statusline-mode-normal {
+  color: #7dd3fc;
+  background: rgba(125, 211, 252, 0.12);
+}
+
+.vim-statusline-mode-insert {
+  color: #22c55e;
+  background: rgba(34, 197, 94, 0.12);
+}
+
+.vim-statusline-mode-visual {
+  color: #f59e0b;
+  background: rgba(245, 158, 11, 0.12);
+}
+
+.vim-statusline-mode-command {
+  color: #eab308;
+  background: rgba(234, 179, 8, 0.12);
+}
+
+.vim-statusline-buffer {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.vim-statusline-message {
+  color: var(--text-muted);
+  margin-left: auto;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }

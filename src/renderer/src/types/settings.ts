@@ -22,9 +22,9 @@ export type MarkdownDialect = 'commonmark' | 'gfm'
 export type EditorView = 'markdown' | 'dual'
 export type UIDensity = 'compact' | 'normal' | 'comfortable'
 export type IconSet = 'minimal' | 'outline' | 'filled'
-export type KeyboardProfile = 'default'
+export type KeyboardProfile = 'default' | 'vim'
 
-export type FontFamily = 
+export type FontFamily =
   | 'JetBrains Mono'
   | 'Fira Code'
   | 'Source Code Pro'
@@ -187,4 +187,3 @@ export const defaultSettings: Settings = {
     license: 'MIT'
   }
 }
-

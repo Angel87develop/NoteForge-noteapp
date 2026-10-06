@@ -5,6 +5,7 @@ import { Note, Notebook } from '../../types/note'
 import { sanitizeContent } from '../../utils/markdownUtils'
 import { useSettings } from '../../contexts/SettingsContext'
 import { useUndoRedo } from '../../hooks/useUndoRedo'
+import { useEditorStyles } from '../../hooks/useEditorStyles'
 import NoteEditorHeader from './NoteEditorHeader'
 import TagsModal from './TagsModal'
 import MarkdownEditor from './MarkdownEditor'
@@ -33,7 +34,7 @@ const tagColors = [
   '#8b5cf6', // purple
   '#ec4899', // pink
   '#06b6d4', // cyan
-  '#84cc16'  // lime
+  '#84cc16' // lime
 ]
 
 export default function NoteEditor({
@@ -44,15 +45,14 @@ export default function NoteEditor({
   onTagUpdate
 }: NoteEditorProps) {
   const { settings, updateEditorBehavior } = useSettings()
+  const { editorStyles, editorClasses } = useEditorStyles()
   const {
     value: editedContent,
     set: setEditedContentRaw,
     reset: resetEditedContent,
     undo: undoContent,
     redo: redoContent,
-    flush: flushUndoRedo,
-    canUndo,
-    canRedo
+    flush: flushUndoRedo
   } = useUndoRedo<string>('')
   const [editedTitle, setEditedTitle] = useState(() => note?.title ?? '')
   const [isEditingTitle, setIsEditingTitle] = useState(false)
@@ -69,7 +69,10 @@ export default function NoteEditor({
 
   // Función de guardado
   const handleSave = useCallback(() => {
-    if (note && (editedContent !== lastSavedContentRef.current || editedTitle !== lastSavedTitleRef.current)) {
+    if (
+      note &&
+      (editedContent !== lastSavedContentRef.current || editedTitle !== lastSavedTitleRef.current)
+    ) {
       console.log('Guardando nota:', note.id, 'Título:', editedTitle)
       lastSavedContentRef.current = editedContent
       lastSavedTitleRef.current = editedTitle
@@ -87,20 +90,20 @@ export default function NoteEditor({
   // Sincronizar cuando cambia la nota
   useEffect(() => {
     if (!note) return
-    
+
     const currentNoteId = note.id
     const noteIdChanged = previousNoteIdRef.current !== currentNoteId
-    
+
     if (noteIdChanged) {
       if (previousNoteIdRef.current && saveTimeoutRef.current) {
         clearTimeout(saveTimeoutRef.current)
         handleSave()
       }
-      
+
       previousNoteIdRef.current = currentNoteId
       const sanitizedContent = sanitizeContent(note.content)
       const isNewNote = note.title === 'Untitled Note' && note.content === ''
-      
+
       requestAnimationFrame(() => {
         resetEditedContent(sanitizedContent)
         setEditedTitle(note.title)
@@ -133,17 +136,20 @@ export default function NoteEditor({
   // Guardado automático con debouncing
   useEffect(() => {
     if (!note) return
-    
+
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current)
     }
-    
-    if (editedContent !== lastSavedContentRef.current || editedTitle !== lastSavedTitleRef.current) {
+
+    if (
+      editedContent !== lastSavedContentRef.current ||
+      editedTitle !== lastSavedTitleRef.current
+    ) {
       saveTimeoutRef.current = setTimeout(() => {
         handleSave()
       }, 300)
     }
-    
+
     return () => {
       if (saveTimeoutRef.current) {
         clearTimeout(saveTimeoutRef.current)
@@ -192,6 +198,25 @@ export default function NoteEditor({
     }
   }, [settings.editor.behavior.view, updateEditorBehavior])
 
+  // Escuchar eventos de undo/redo desde Vim mode (tecla 'u' y Ctrl+r)
+  useEffect(() => {
+    const handleVimUndo = (): void => {
+      flushUndoRedo()
+      undoContent()
+    }
+    const handleVimRedo = (): void => {
+      flushUndoRedo()
+      redoContent()
+    }
+
+    window.addEventListener('vim-undo', handleVimUndo)
+    window.addEventListener('vim-redo', handleVimRedo)
+    return () => {
+      window.removeEventListener('vim-undo', handleVimUndo)
+      window.removeEventListener('vim-redo', handleVimRedo)
+    }
+  }, [flushUndoRedo, undoContent, redoContent])
+
   const handleTitleSave = (title: string) => {
     if (note) {
       setEditedTitle(title)
@@ -218,6 +243,9 @@ export default function NoteEditor({
     // Ctrl/Cmd + Z: Undo
     if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key.toLowerCase() === 'z') {
       e.preventDefault()
+      e.stopPropagation()
+      // flush + commit del pendiente actual para que la edición en curso
+      // también entre en el historial antes de saltar al snapshot anterior.
       flushUndoRedo()
       undoContent()
       return
@@ -228,6 +256,7 @@ export default function NoteEditor({
       ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'z')
     ) {
       e.preventDefault()
+      e.stopPropagation()
       flushUndoRedo()
       redoContent()
       return
@@ -265,7 +294,7 @@ export default function NoteEditor({
     const tagRegex = /(?:^|\s)([#@])(\w+)/g
     const matches = Array.from(editedContent.matchAll(tagRegex))
     const detectedTags = new Set<string>()
-    
+
     matches.forEach((match) => {
       detectedTags.add(match[2])
     })
@@ -273,10 +302,10 @@ export default function NoteEditor({
     if (detectedTags.size > 0) {
       const currentTags = note.tags || []
       const newTags = Array.from(detectedTags).filter((tag) => !currentTags.includes(tag))
-      
+
       if (newTags.length > 0) {
         const updatedTags = [...currentTags, ...newTags]
-        
+
         if (onTagUpdate) {
           newTags.forEach((tagName) => {
             if (!tags[tagName]) {
@@ -285,7 +314,7 @@ export default function NoteEditor({
             }
           })
         }
-        
+
         onNoteUpdate({ ...note, tags: updatedTags, updatedAt: new Date().toISOString() })
       }
     }
@@ -294,7 +323,11 @@ export default function NoteEditor({
 
   const handleRemoveTag = (tagName: string): void => {
     if (note) {
-      onNoteUpdate({ ...note, tags: note.tags?.filter((t) => t !== tagName), updatedAt: new Date().toISOString() })
+      onNoteUpdate({
+        ...note,
+        tags: note.tags?.filter((t) => t !== tagName),
+        updatedAt: new Date().toISOString()
+      })
     }
   }
 
@@ -304,7 +337,12 @@ export default function NoteEditor({
         <div className="text-center">
           <div className="w-20 h-20 rounded-2xl bg-ink-800 flex items-center justify-center mx-auto mb-6 shadow-lg">
             <svg width="40" height="40" viewBox="0 0 24 24" fill="none" className="text-text-muted">
-              <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              <path
+                d="M12 5v14M5 12h14"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+              />
             </svg>
           </div>
           <h3 className="text-xl font-serif text-text-primary mb-2">No note selected</h3>
@@ -343,10 +381,9 @@ export default function NoteEditor({
           onRemoveTag={handleRemoveTag}
           onAddTagClick={() => setShowTagsModal(true)}
         />
-      )
-    }
+      )}
 
-    {/* Tags Modal */}
+      {/* Tags Modal */}
       <TagsModal
         isOpen={showTagsModal}
         newTagName={newTagName}
@@ -356,7 +393,10 @@ export default function NoteEditor({
         onTagNameChange={setNewTagName}
         onTagColorChange={setNewTagColor}
         onAdd={handleAddTag}
-        onCancel={() => { setShowTagsModal(false); setNewTagName('') }}
+        onCancel={() => {
+          setShowTagsModal(false)
+          setNewTagName('')
+        }}
       />
 
       {/* Content Area */}
@@ -365,12 +405,11 @@ export default function NoteEditor({
           <div
             className="w-full h-full min-h-0"
             style={{
-              fontFamily:
-                settings.editor.appearance.fontFamily === 'custom'
-                  ? `'${settings.editor.appearance.customFontFamily}', ui-monospace, monospace`
-                  : "'JetBrains Mono', ui-monospace, monospace",
-              fontSize: `${settings.editor.appearance.fontSize}px`,
-              lineHeight: settings.editor.appearance.lineHeight
+              fontFamily: editorStyles.fontFamily,
+              fontSize: editorStyles.fontSize,
+              lineHeight: editorStyles.lineHeight,
+              maxWidth: editorStyles.maxWidth,
+              margin: editorStyles.margin
             }}
           >
             <MarkdownEditor
@@ -381,6 +420,8 @@ export default function NoteEditor({
                 handleSave()
               }}
               onKeyDown={handleKeyDown}
+              editorClassName={editorClasses}
+              vimEnabled={settings.keyboard.profile === 'vim'}
             />
           </div>
         )}
@@ -390,12 +431,11 @@ export default function NoteEditor({
             <div
               className="flex-1 min-w-0 min-h-0"
               style={{
-                fontFamily:
-                  settings.editor.appearance.fontFamily === 'custom'
-                    ? `'${settings.editor.appearance.customFontFamily}', ui-monospace, monospace`
-                    : "'JetBrains Mono', ui-monospace, monospace",
-                fontSize: `${settings.editor.appearance.fontSize}px`,
-                lineHeight: settings.editor.appearance.lineHeight
+                fontFamily: editorStyles.fontFamily,
+                fontSize: editorStyles.fontSize,
+                lineHeight: editorStyles.lineHeight,
+                maxWidth: editorStyles.maxWidth,
+                margin: editorStyles.margin
               }}
             >
               <MarkdownEditor
@@ -406,6 +446,8 @@ export default function NoteEditor({
                   handleSave()
                 }}
                 onKeyDown={handleKeyDown}
+                editorClassName={editorClasses}
+                vimEnabled={settings.keyboard.profile === 'vim'}
               />
             </div>
             <div className="flex-1 min-w-0 min-h-0 border-l border-ink-800 pl-6">
@@ -415,36 +457,8 @@ export default function NoteEditor({
         )}
       </div>
 
-      {/* Undo / Redo / View Mode Toggle */}
+      {/* View Mode Toggle */}
       <div className="fixed bottom-6 right-6 flex items-center gap-2 z-50">
-        <button
-          onClick={() => {
-            flushUndoRedo()
-            undoContent()
-          }}
-          disabled={!canUndo}
-          className="w-12 h-12 rounded-xl bg-ink-700 hover:bg-ink-600 border border-ink-600 flex items-center justify-center text-text-muted hover:text-amber transition-all shadow-lg hover:shadow-glow group disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-ink-700"
-          title="Undo (Ctrl+Z)"
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="group-hover:scale-110 transition-transform">
-            <path d="M9 14L4 9l5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            <path d="M4 9h11a5 5 0 0 1 0 10h-1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </button>
-        <button
-          onClick={() => {
-            flushUndoRedo()
-            redoContent()
-          }}
-          disabled={!canRedo}
-          className="w-12 h-12 rounded-xl bg-ink-700 hover:bg-ink-600 border border-ink-600 flex items-center justify-center text-text-muted hover:text-amber transition-all shadow-lg hover:shadow-glow group disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-ink-700"
-          title="Redo (Ctrl+Y)"
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="group-hover:scale-110 transition-transform">
-            <path d="M15 14l5-5-5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            <path d="M20 9H9a5 5 0 0 0 0 10h1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </button>
         <button
           onClick={() => {
             if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current)
@@ -477,8 +491,21 @@ export default function NoteEditor({
               fill="none"
               className="group-hover:scale-110 transition-transform"
             >
-              <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-              <rect x="4" y="4" width="16" height="16" rx="2" stroke="currentColor" strokeWidth="1.5" />
+              <path
+                d="M12 5v14M5 12h14"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+              />
+              <rect
+                x="4"
+                y="4"
+                width="16"
+                height="16"
+                rx="2"
+                stroke="currentColor"
+                strokeWidth="1.5"
+              />
             </svg>
           ) : (
             // Icono de ojo (modo preview / mixto)

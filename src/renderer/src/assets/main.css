@@ -1,5 +1,5 @@
 @import 'tailwindcss';
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Anonymous+Pro:ital,wght@0,400;0,700;1,400;1,700&family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Fira+Code:wght@300..700&family=IBM+Plex+Mono:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;1,100;1,200;1,300;1,400;1,500;1,600;1,700&family=Inconsolata:wght@200..900&family=Inter:ital,opsz,wght@0,14..100;1,14..100&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Raleway:ital,wght@0,100..900;1,100..900&family=Roboto+Mono:ital,wght@0,100..700;1,100..700&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&family=Source+Code+Pro:ital,wght@0,200..900;1,200..900&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&family=Ubuntu+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap');
 
 /* ═══════════════════════════════════════════════════════════════════════════
    NOTEFORGE - Modern Note-Taking App
@@ -14,30 +14,30 @@
   --bg-tertiary: #1c1c1c;
   --bg-elevated: #242424;
   --bg-hover: #2a2a2a;
-  
+
   /* Accent colors - Warm amber/gold */
   --accent-primary: #f59e0b;
   --accent-secondary: #fbbf24;
   --accent-muted: #92400e;
   --accent-glow: rgba(245, 158, 11, 0.15);
-  
+
   /* Text colors */
   --text-primary: #fafafa;
   --text-secondary: #a3a3a3;
   --text-muted: #737373;
   --text-accent: #fcd34d;
-  
+
   /* Border colors */
   --border-subtle: #262626;
   --border-default: #333333;
   --border-accent: #f59e0b;
-  
+
   /* Status colors */
   --status-active: #22c55e;
   --status-on-hold: #f59e0b;
   --status-completed: #3b82f6;
   --status-dropped: #6b7280;
-  
+
   /* Shadows */
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
   --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.5);
@@ -56,8 +56,14 @@ body {
   overflow: hidden;
   background-color: var(--bg-primary);
   color: var(--text-primary);
-  font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-  font-feature-settings: 'liga' 1, 'calt' 1;
+  font-family:
+    'DM Sans',
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
+  font-feature-settings:
+    'liga' 1,
+    'calt' 1;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -110,7 +116,11 @@ body {
    ═══════════════════════════════════════════════════════════════════════════ */
 
 .markdown-content {
-  font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family:
+    'DM Sans',
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
   line-height: 1.75;
 }
 
@@ -389,17 +399,17 @@ body {
 }
 
 .sidebar .text-text-primary,
-.sidebar [class*="text-text-primary"] {
+.sidebar [class*='text-text-primary'] {
   color: var(--text-primary) !important;
 }
 
 .sidebar .text-text-secondary,
-.sidebar [class*="text-text-secondary"] {
+.sidebar [class*='text-text-secondary'] {
   color: var(--text-secondary) !important;
 }
 
 .sidebar .text-text-muted,
-.sidebar [class*="text-text-muted"] {
+.sidebar [class*='text-text-muted'] {
   color: var(--text-muted) !important;
 }
 
@@ -568,28 +578,57 @@ body {
   box-shadow: 0 0 6px currentColor;
 }
 
-.status-active { color: var(--status-active); background: var(--status-active); }
-.status-on-hold { color: var(--status-on-hold); background: var(--status-on-hold); }
-.status-completed { color: var(--status-completed); background: var(--status-completed); }
-.status-dropped { color: var(--status-dropped); background: var(--status-dropped); }
+.status-active {
+  color: var(--status-active);
+  background: var(--status-active);
+}
+.status-on-hold {
+  color: var(--status-on-hold);
+  background: var(--status-on-hold);
+}
+.status-completed {
+  color: var(--status-completed);
+  background: var(--status-completed);
+}
+.status-dropped {
+  color: var(--status-dropped);
+  background: var(--status-dropped);
+}
 
 /* ═══════════════════════════════════════════════════════════════════════════
    ANIMATIONS
    ═══════════════════════════════════════════════════════════════════════════ */
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-4px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes slideIn {
-  from { opacity: 0; transform: translateX(-8px); }
-  to { opacity: 1; transform: translateX(0); }
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 @keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 0 0 var(--accent-glow); }
-  50% { box-shadow: 0 0 20px 4px var(--accent-glow); }
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 var(--accent-glow);
+  }
+  50% {
+    box-shadow: 0 0 20px 4px var(--accent-glow);
+  }
 }
 
 .animate-fade-in {
@@ -673,7 +712,8 @@ body {
 
 .code-block-pre code,
 .code-block code {
-  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-family:
+    'JetBrains Mono', ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
   font-size: 0.875rem;
   line-height: 1.6;
   color: #abb2bf;
@@ -685,24 +725,64 @@ body {
 }
 
 /* Tokens de resaltado de sintaxis (One Dark) */
-.tok-keyword { color: #c678dd; font-weight: 500; }
-.tok-builtin { color: #e5c07b; }
-.tok-string { color: #98c379; }
-.tok-comment { color: #5c6370; font-style: italic; }
-.tok-number { color: #d19a66; }
-.tok-function { color: #61afef; }
-.tok-operator { color: #56b6c2; }
-.tok-punctuation { color: #abb2bf; }
-.tok-class-name { color: #e5c07b; }
-.tok-variable { color: #e06c75; }
-.tok-property { color: #e06c75; }
-.tok-regex { color: #98c379; }
-.tok-decorator { color: #56b6c2; font-style: italic; }
-.tok-boolean { color: #d19a66; font-weight: 500; }
-.tok-constant { color: #d19a66; }
-.tok-tag { color: #e06c75; }
-.tok-attr-name { color: #d19a66; }
-.tok-attr-value { color: #98c379; }
+.tok-keyword {
+  color: #c678dd;
+  font-weight: 500;
+}
+.tok-builtin {
+  color: #e5c07b;
+}
+.tok-string {
+  color: #98c379;
+}
+.tok-comment {
+  color: #5c6370;
+  font-style: italic;
+}
+.tok-number {
+  color: #d19a66;
+}
+.tok-function {
+  color: #61afef;
+}
+.tok-operator {
+  color: #56b6c2;
+}
+.tok-punctuation {
+  color: #abb2bf;
+}
+.tok-class-name {
+  color: #e5c07b;
+}
+.tok-variable {
+  color: #e06c75;
+}
+.tok-property {
+  color: #e06c75;
+}
+.tok-regex {
+  color: #98c379;
+}
+.tok-decorator {
+  color: #56b6c2;
+  font-style: italic;
+}
+.tok-boolean {
+  color: #d19a66;
+  font-weight: 500;
+}
+.tok-constant {
+  color: #d19a66;
+}
+.tok-tag {
+  color: #e06c75;
+}
+.tok-attr-name {
+  color: #d19a66;
+}
+.tok-attr-value {
+  color: #98c379;
+}
 
 /* Sobrescribir estilos para temas claros: fondo claro + paleta clara */
 .theme-light .code-block,
@@ -725,24 +805,60 @@ body {
   color: #24292e;
 }
 
-.theme-light .tok-keyword { color: #d73a49; }
-.theme-light .tok-builtin { color: #005cc5; }
-.theme-light .tok-string { color: #032f62; }
-.theme-light .tok-comment { color: #6a737d; }
-.theme-light .tok-number { color: #005cc5; }
-.theme-light .tok-function { color: #6f42c1; }
-.theme-light .tok-operator { color: #d73a49; }
-.theme-light .tok-punctuation { color: #24292e; }
-.theme-light .tok-class-name { color: #22863a; }
-.theme-light .tok-variable { color: #e36209; }
-.theme-light .tok-property { color: #e36209; }
-.theme-light .tok-regex { color: #032f62; }
-.theme-light .tok-decorator { color: #d73a49; }
-.theme-light .tok-boolean { color: #005cc5; }
-.theme-light .tok-constant { color: #005cc5; }
-.theme-light .tok-tag { color: #22863a; }
-.theme-light .tok-attr-name { color: #6f42c1; }
-.theme-light .tok-attr-value { color: #032f62; }
+.theme-light .tok-keyword {
+  color: #d73a49;
+}
+.theme-light .tok-builtin {
+  color: #005cc5;
+}
+.theme-light .tok-string {
+  color: #032f62;
+}
+.theme-light .tok-comment {
+  color: #6a737d;
+}
+.theme-light .tok-number {
+  color: #005cc5;
+}
+.theme-light .tok-function {
+  color: #6f42c1;
+}
+.theme-light .tok-operator {
+  color: #d73a49;
+}
+.theme-light .tok-punctuation {
+  color: #24292e;
+}
+.theme-light .tok-class-name {
+  color: #22863a;
+}
+.theme-light .tok-variable {
+  color: #e36209;
+}
+.theme-light .tok-property {
+  color: #e36209;
+}
+.theme-light .tok-regex {
+  color: #032f62;
+}
+.theme-light .tok-decorator {
+  color: #d73a49;
+}
+.theme-light .tok-boolean {
+  color: #005cc5;
+}
+.theme-light .tok-constant {
+  color: #005cc5;
+}
+.theme-light .tok-tag {
+  color: #22863a;
+}
+.theme-light .tok-attr-name {
+  color: #6f42c1;
+}
+.theme-light .tok-attr-value {
+  color: #032f62;
+}
 
 /* Estilo compacto para bloques de código dentro del editor (overlay/markdown) */
 .md-code-block {

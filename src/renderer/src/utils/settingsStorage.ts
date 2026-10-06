@@ -8,7 +8,7 @@ export const loadSettings = (): Settings => {
     const stored = localStorage.getItem(SETTINGS_KEY)
     if (stored) {
       const parsed = JSON.parse(stored)
-      
+
       // Migrar nombres de shortcuts de español a inglés y eliminar shortcuts obsoletos
       let shortcuts = parsed.keyboard?.shortcuts || defaultSettings.keyboard.shortcuts
       shortcuts = shortcuts.map((shortcut: any) => {
@@ -18,36 +18,34 @@ export const loadSettings = (): Settings => {
           'Cambiar nota': 'Switch note',
           'Modo enfoque': 'Focus mode'
         }
-        
+
         // Actualizar nombre si está en el mapa
         if (nameMap[shortcut.name]) {
           shortcut.name = nameMap[shortcut.name]
         }
-        
+
         return shortcut
       })
-      
+
       // Eliminar shortcut de "Modo enfoque" (focus-mode)
       shortcuts = shortcuts.filter((shortcut: any) => shortcut.id !== 'focus-mode')
-      
+
       // Asegurar que todos los shortcuts requeridos existan
       const requiredShortcutIds = ['new-note', 'switch-note', 'toggle-preview', 'toggle-sidebar']
       const existingIds = shortcuts.map((s: any) => s.id)
-      
+
       requiredShortcutIds.forEach((id) => {
         if (!existingIds.includes(id)) {
-          const defaultShortcut = defaultSettings.keyboard.shortcuts.find(s => s.id === id)
+          const defaultShortcut = defaultSettings.keyboard.shortcuts.find((s) => s.id === id)
           if (defaultShortcut) {
             shortcuts.push(defaultShortcut)
           }
         }
       })
-      
+
       const storedView = parsed.editor?.behavior?.view
       const normalizedView: Settings['editor']['behavior']['view'] =
-        storedView === 'dual' || storedView === 'editor-preview'
-          ? 'dual'
-          : 'markdown'
+        storedView === 'dual' || storedView === 'editor-preview' ? 'dual' : 'markdown'
 
       // Merge con defaults para asegurar que todas las propiedades existan
       return {
@@ -73,9 +71,9 @@ export const loadSettings = (): Settings => {
         keyboard: {
           ...defaultSettings.keyboard,
           ...parsed.keyboard,
-          profile: ['vim', 'emacs'].includes(parsed.keyboard?.profile)
-            ? 'default'
-            : (parsed.keyboard?.profile ?? defaultSettings.keyboard.profile),
+          profile: ['default', 'vim'].includes(parsed.keyboard?.profile)
+            ? parsed.keyboard?.profile
+            : defaultSettings.keyboard.profile,
           shortcuts
         },
         ui: {
@@ -110,4 +108,3 @@ export const resetSettings = (): Settings => {
   saveSettings(defaultSettings)
   return defaultSettings
 }
-

@@ -6,9 +6,21 @@ interface UseUndoRedoOptions {
   maxHistory?: number
 }
 
+interface SetOptions {
+  /**
+   * Forzar un commit inmediato del valor pendiente actual al stack de
+   * historial antes de registrar el nuevo valor como pendiente.
+   *
+   * Útil para operaciones estructurales (Enter, Tab, pegado, etc.) que
+   * deben ser su propio punto de undo, en lugar de agruparse con la
+   * edición inmediatamente anterior.
+   */
+  commit?: boolean
+}
+
 interface UseUndoRedoResult<T> {
   value: T
-  set: (value: T) => void
+  set: (value: T, options?: SetOptions) => void
   reset: (value: T) => void
   undo: () => boolean
   redo: () => boolean
@@ -67,15 +79,38 @@ export function useUndoRedo<T>(initial: T, options?: UseUndoRedoOptions): UseUnd
   }, [maxHistory, updateFlags])
 
   const set = useCallback(
-    (value: T): void => {
-      presentRef.current = value
+    (value: T, options?: SetOptions): void => {
+      if (options?.commit) {
+        // Forzar un commit inmediato del valor pendiente actual antes
+        // de registrar el nuevo como pendiente. Esto crea un punto de
+        // undo claro para operaciones estructurales (Enter, Tab, etc.).
+        clearTimer()
+        if (pendingRef.current !== null) {
+          const pending = pendingRef.current
+          pendingRef.current = null
+          const stack = stackRef.current
+          if (pending !== presentRef.current) {
+            stack.past.push(presentRef.current)
+            if (stack.past.length > maxHistory) stack.past.shift()
+            presentRef.current = pending
+            stack.future = []
+            setPresentState(pending)
+          }
+        }
+      }
+
+      // NOTA: No actualizamos presentRef.current aquí.
+      // presentRef debe mantener el último valor *confirmado* (snapshot)
+      // hasta que flush() lo comprometa y empuje el anterior al stack `past`.
+      // Si lo actualizáramos aquí, flush() vería value === presentRef.current
+      // y nunca registraría historial para undo.
       setPresentState(value)
       pendingRef.current = value
       clearTimer()
       timerRef.current = setTimeout(flush, debounceMs)
       updateFlags()
     },
-    [debounceMs, flush, updateFlags]
+    [debounceMs, flush, updateFlags, maxHistory]
   )
 
   const reset = useCallback(
